@@ -67,43 +67,45 @@
                     <td class=" last">{{ template.title }}</td>
 
                     <td>
-                        
-                        {% if template.severity == "Critical" %}
-                            <b><font color="#CC0000">{{template.severity}}</font></b>
-                        {% elif template.severity == "High" %}
-                            <b><font color="#F20000">{{template.severity}}</font></b>
-                        {% elif template.severity == "Medium" %}
-                            <b><font color="#FC7F03">{{template.severity}}</font></b>
-                        {% elif template.severity == "Low" %}
-                            <b><font color="#05B04F">{{template.severity}}</font></b>
-                        {% elif template.severity == "Info" %}
-                            <b><font color="#45A7F7">{{template.severity}}</font></b>
-                        {% else %}
-                            <b>{{template.severity}}</b>
-                        {% endif %}
+
+                          {% if template.severity == "Critical" %}
+                              <b><font color="#CC0000">{{template.severity}}</font></b>
+                          {% elif template.severity == "High" %}
+                              <b><font color="#F20000">{{template.severity}}</font></b>
+                          {% elif template.severity == "Medium" %}
+                              <b><font color="#FC7F03">{{template.severity}}</font></b>
+                          {% elif template.severity == "Low" %}
+                              <b><font color="#05B04F">{{template.severity}}</font></b>
+                          {% elif template.severity == "Info" %}
+                              <b><font color="#45A7F7">{{template.severity}}</font></b>
+                          {% else %}
+                              <b>{{template.severity}}</b>
+                          {% endif %}
 
                     </td>
 
-                    <td>
-                        {{template.cvss_vector}}
-                    </td>
+                      <td>
+                          {{template.cvss_base_score}}
+                      </td>
 
-                    <td align="center">
-                        <a href="{% url 'templateaddreport' template.pk DB_report_query.pk %}"><button type="button" class="btn btn-danger btn-sm"><i class="fa fa-folder"></i> {% translate "Add Finding to Report" %}</button></a>
-                    </td>
-        
+                      <td align="center">
+
+                        <a href="{% url 'template_add_report' template.pk DB_report_query.pk %}"><button type="button" class="btn btn-danger btn-sm"><i class="fa fa-folder"></i> {% translate "Add Finding to Report" %}</button></a>
+
+                      </td>
+
 
                   </tr>
 
                 {% endfor %}
-                  
+
                 </tbody>
               </table>
 
         </div>
       </div>
     </div>
-  </section> 
+  </section>
 
 
 {% endblock content %}

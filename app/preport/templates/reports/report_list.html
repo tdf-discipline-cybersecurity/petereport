@@ -4,7 +4,7 @@
 
 {% load app_filters %}
 
-{% block title %} {% translate "Report List" %} {% endblock title %}
+{% block title %} {% translate "Reports List" %} {% endblock title %}
 
 {% block stylesheets %}
   {{ block.super }}
@@ -16,7 +16,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>{% translate "Report List" %}</h1>
+            <h1>{% translate "Reports List" %}</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -45,12 +45,15 @@
           <table id="reportlist" class="table table-bordered table-hover">
               <thead>
                   <tr>
-                    <th style="width: 18%" class="text-center">{% translate "ID" %}</th>
-                    <th style="width: 25%" class="text-center">{% translate "Report" %}</th>
-                    <th style="width: 10%" class="text-center">{% translate "Customer" %}</th>
-                    <th style="width: 12%" class="text-center">{% translate "Product" %}</th>
-                    <th style="width: 12%" class="text-center">{% translate "Findings" %}</th>
-                    <th style="width: 22%" class="text-center">{% translate "Actions" %}</th>
+                    <th style="width: 5%">{% translate "ID" %}</th>
+                    <th style="width: 25%">{% translate "Report" %}</th>
+                    <th style="width: 10%">{% translate "Product" %}</th>
+                    <th style="width: 10%">{% translate "Customer" %}</th>
+                    <th style="width: 5%">{% translate "Findings" %}</th>
+                    {% if enable_cspn %}
+                    <th style="width: 5%">{% translate "CSPN" %}</th>
+                    {% endif %}
+                    <th style="width: 40%" class="text-center">{% translate "Actions" %}</th>
                   </tr>
               </thead>
               <tbody>
@@ -59,78 +62,35 @@
                   <tr>
                     <td>{{ report.report_id }} </td>
                     <td>{{ report.title }} </td>
+                    <td><a href="{% url 'product_view' report.product.pk %}">{{ report.product.name }}</a></td>
                     <td><a href="{% url 'customer_view' report.product.customer.pk %}">{{ report.product.customer.name }}</a></td>
-                    <td>{{ report.product.name }} </td>
                     <td>
                       <span class="pull-right badge bg-red">{{ report.db_finding_set.count }}</span> {% translate "Finding" %}{{ report.db_finding_set.count|pluralize:"s" }}
                     </td>
+                    {% if enable_cspn %}
+                    <td>
+                      <span class="pull-right badge bg-primary">{{ report.db_cspn_evaluation_set.count }}</span> {% translate "CSPN" %}{{ report.db_cspn_evaluation_set.count|pluralize:"s" }}
+                    </td>
+                    {% endif %}
                     <td class="text-center">
-                        <a href="/report/view/{{ report.pk }}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
-                        
+                        <a href="{% url 'report_view' report.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
+
                         {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-
-                          <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target=".mm-modal-clone-{{report.pk}}"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
-
-                          <a href="/report/edit/{{ report.pk }}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a> 
-                          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-{{report.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %} </button>
+                          <a href="{% url 'report_edit' report.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                          <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{report.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-Report"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                          <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{report.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Report"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                         {% endif %}
                     </td>
                   </tr>
-                  
-
-                        <div class="modal modal-danger fade mm-modal-{{report.pk}}" id="modal-danger">
-                          <div class="modal-dialog">
-                            <div class="modal-content bg-danger">
-                              <div class="modal-header">
-                                <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                <p>{% translate "Delete Report" %}&hellip;</p>
-                              </div>
-                              <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                <button type="button" onclick="DeleteID({{report.pk}});" class="btn btn-outline-light">{% translate "Delete Report" %}</button>
-
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-
-
-                        <div class="modal modal-warning fade mm-modal-clone-{{report.pk}}" id="modal-warning">
-                          <div class="modal-dialog">
-                            <div class="modal-content bg-warning">
-                              <div class="modal-header">
-                                <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                <p>{% translate "Clone Report and Findings" %}&hellip;</p>
-                              </div>
-                              <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                <button type="button" onclick="DuplicateID({{report.pk}});" class="btn btn-outline-light">{% translate "Clone Report and Findings" %}</button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-
-
                 {% endfor %}
-
               </tbody>
           </table>
+          {% include "home/template_delete_item.html" with item="Report" %}
+          {% include "home/template_duplicate_item.html" with item="Report" %}
         </div>
-       
+
       </div>
-      
+
     </div>
   </section>
 
@@ -143,41 +103,84 @@
 
 <script>
   $(function () {
+    $('#reportlist thead tr')
+    .clone(true)
+    .addClass('filters')
+    .appendTo('#reportlist thead');
     $("#reportlist").DataTable({
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
+      "responsive": true,
+      "lengthChange": false,
       "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#reportlist_wrapper .col-md-6:eq(0)');
   });
 </script>
 
 <script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "/en/report/delete/",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
 
-            success : function(json) {
-              document.location.href = "{% url 'report_list' %}";
-            }
-        })
-  }
-
-  function DuplicateID(dup_id) {
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
+  function Delete_Report() {
+    var itemId = $(".item-id #itemID").val();
     $.ajax({
         type: 'POST',
-        url: "{% url 'report_findings_duplicate' %}",
+        url: "{% url 'report_delete' %}",
         headers:{
           "X-CSRFToken": '{{ csrf_token }}'
         },
-        data : { 'duplicate_id': dup_id},
+        data : { 'delete_id': itemId},
 
         success : function(json) {
           document.location.href = "{% url 'report_list' %}";
@@ -185,6 +188,21 @@
     })
   }
 
+  function Duplicate_Report() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'report_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_list' %}";
+        }
+    })
+  }
 </script>
 
 {% endblock javascripts %}

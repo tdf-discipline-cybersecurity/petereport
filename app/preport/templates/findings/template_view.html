@@ -11,7 +11,7 @@
 {% endblock stylesheets %}
 
 {% block content %}
-  
+
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
@@ -22,12 +22,24 @@
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
               <li class="breadcrumb-item"><a href="{% url 'template_list' %}">{% translate "Templates" %}</a></li>
-              <li class="breadcrumb-item active">{{ DB_Template.title | bleach}}</li>
+              <li class="breadcrumb-item active">
+                {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                  <a href="{% url 'template_edit' DB_template_query.pk %}#{{ DB_template_query.get_cvss_score_anchor }}" class="fas fa-pencil-alt">&nbsp;</a>
+                {% endif %}
+                {{ DB_template_query.title | bleach}}
+                {% if bookmark_exists %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark" style="color:blue"></i>
+                {% else %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark"></i>
+                {% endif %}
+              </li>
             </ol>
           </div>
         </div>
       </div>
     </section>
+
+
 
 
 
@@ -53,14 +65,14 @@
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
-                    
-      
+
+
                   <div class="row">
                       <div class="col-12 col-sm-6">
                         <div class="info-box bg-light">
                           <div class="info-box-content">
                             <span class="info-box-number text-center text-muted">{% translate "Finding ID" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.finding_id }}</span>
+                            <span class="info-box-text text-center text-muted mb-0">{{ DB_template_query.finding_id }}</span>
                           </div>
                         </div>
                       </div>
@@ -68,98 +80,69 @@
                       <div class="col-12 col-sm-6">
                         <div class="info-box bg-light">
                           <div class="info-box-content">
-                            <span class="info-box-number text-center text-muted">{% translate "Title" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.title | safe | bleach}}<span>
+                            <span class="info-box-number text-center text-muted">{% translate "Finding ID" %}</span>
+                            <span class="info-box-text text-center text-muted mb-0">{{ DB_template_query.display_id }}</span>
                           </div>
                         </div>
                       </div>
 
-                    </div>
+                      <div class="col-12 col-sm-6">
+                        <div class="info-box bg-light">
+                          <div class="info-box-content">
+                            <span class="info-box-number text-center text-muted">{% translate "CVSS Score" %} (Version {{finding.report.cvss_version|safe}})</span>
+                            <span class="info-box-text text-center text-muted mb-0">
+                              <a href="https://www.first.org/cvss/calculator/{{DB_template_query.get_cvss_version|safe}}#{{DB_template_query.get_cvss_score_anchor|safe}}">
+                                {{ DB_template_query.cvss_base_score | safe}}
+                              <a/>
+                            <span>
+                          </div>
+                        </div>
+                     </div>
+                  </div>
 
-
-
-        
                     <div class="row">
-                      <div class="col-12 col-sm-6">
+                      <div class="col-12 col-sm-8">
                         <div class="info-box bg-light">
                           <div class="info-box-content">
-                            <span class="info-box-number text-center text-muted">{% translate "CVSS Vector" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.cvss_vector | safe | bleach}}<span>
-                        </div>
-                        </div>
-                      </div>
-
-                      <div class="col-12 col-sm-3">
-                        <div class="info-box bg-light">
+                            <span class="info-box-number text-center text-muted">{% translate "CWE" %}</span>
+                            <span class="info-box-text text-center text-muted mb-0">{{ DB_template_query.cwe.cwe_id }} - {{DB_template_query.cwe.cwe_name }}</span>
+                          </div>
                           <div class="info-box-content">
-                            <span class="info-box-number text-center text-muted">{% translate "CVSS Score" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.cvss_score | safe | bleach}}<span>
+                            <span class="info-box-number text-center text-muted">{% translate "OWASP" %}</span>
+                            <span class="info-box-text text-center text-muted mb-0">{{ DB_template_query.owasp.owasp_id }} - {{DB_template_query.owasp.owasp_name }}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div class="col-12 col-sm-3">
+
+                        <div class="col-12 col-sm-4">
                         <div class="info-box bg-light">
                           <div class="info-box-content">
                             <span class="info-box-number text-center text-muted">{% translate "Severity" %}</span>
                             <span class="info-box-text text-center text-muted mb-0">
-                                {% if DB_Template.severity == "Critical" %}
-                                      <span><b><font color="#cc0000">{{DB_Template.severity| safe | bleach}}</font></b></span>
-                                  {% elif DB_Template.severity == "High" %}
-                                      <span><b><font color="#ff403d">{{DB_Template.severity| safe | bleach}}</font></b></span>
-                                  {% elif DB_Template.severity == "Medium" %}
-                                      <span><b><font color="#fc7f03">{{DB_Template.severity| safe | bleach}}</font></b></span>
-                                  {% elif DB_Template.severity == "Low" %}
-                                      <span><b><font color="#05b04f">{{DB_Template.severity| safe | bleach}}</font></b></span>
-                                  {% elif DB_Template.severity == "Info" %}
-                                      <span><b><font color="#45a7f7">{{DB_Template.severity| safe | bleach}}</font></b></span>
+                                {% if DB_template_query.severity == "Critical" %}
+                                      <span><b><font color="#cc0000">{{DB_template_query.severity}}</font></b></span>
+                                  {% elif DB_template_query.severity == "High" %}
+                                      <span><b><font color="#ff403d">{{DB_template_query.severity}}</font></b></span>
+                                  {% elif DB_template_query.severity == "Medium" %}
+                                      <span><b><font color="#fc7f03">{{DB_template_query.severity}}</font></b></span>
+                                  {% elif DB_template_query.severity == "Low" %}
+                                      <span><b><font color="#05b04f">{{DB_template_query.severity}}</font></b></span>
+                                  {% elif DB_template_query.severity == "Info" %}
+                                      <span><b><font color="#45a7f7">{{DB_template_query.severity}}</font></b></span>
                                   {% else %}
-                                      <span><b>{{ DB_Template.cvss_score | safe | bleach}} - {{DB_Template.severity | safe | bleach}}</b></span> ({% translate "will not appear in the report" %})
+                                      <span>{{DB_template_query.severity}}</span>
                                 {% endif %}
                           </span>
                           </div>
                         </div>
                       </div>
-
-
                     </div>
-
-
-
-
-                    <div class="row">
-                      <div class="col-12 col-sm-6">
-                        <div class="info-box bg-light">
-                          <div class="info-box-content">
-                            <span class="info-box-number text-center text-muted">{% translate "CWE" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.cwe.cwe_id | safe | bleach}} - {{DB_Template.cwe.cwe_name |safe| bleach}}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="col-12 col-sm-6">
-                        <div class="info-box bg-light">
-                          <div class="info-box-content">
-                            <span class="info-box-number text-center text-muted">{% translate "OWASP" %}</span>
-                            <span class="info-box-text text-center text-muted mb-0">{{ DB_Template.owasp.owasp_id | safe | bleach}} - {{DB_Template.owasp.owasp_name |safe| bleach}}</span>
-                          </div>
-                        </div>
-                      </div>
-                  </div>
-
-
-
-
-                  
-
-
                 </div>
               </div>
 
         </div>
-      </div> 
-
-
+      </div>
 
       <div class="row">
         <div class="col-md-12">
@@ -177,15 +160,15 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.title|safe_markdown | bleach }}
+                  {{ DB_template_query.title|safe_markdown | bleach }}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
 
 
-      {% if DB_Template.description %}
+      {% if DB_template_query.description %}
       <div class="row">
         <div class="col-md-12">
 
@@ -202,17 +185,17 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.description|safe_markdown | bleach }}
+                  {{ DB_template_query.description|safe_markdown | bleach }}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
       {% endif %}
 
 
 
-      {% if DB_Template.location %}
+      {% if DB_template_query.location %}
       <div class="row">
         <div class="col-md-12">
 
@@ -229,15 +212,15 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.location|safe_markdown | bleach }}
+                  {{ DB_template_query.location|safe_markdown | bleach }}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
       {% endif %}
 
-      {% if DB_Template.impact %}
+      {% if DB_template_query.impact %}
       <div class="row">
         <div class="col-md-12">
 
@@ -254,15 +237,15 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.impact|safe_markdown | bleach }}
+                  {{ DB_template_query.impact|safe_markdown | bleach }}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
       {% endif %}
 
-      {% if DB_Template.recommendation %}
+      {% if DB_template_query.recommendation %}
       <div class="row">
         <div class="col-md-12">
 
@@ -279,15 +262,15 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.recommendation|safe_markdown | bleach }}
+                  {{ DB_template_query.recommendation|safe_markdown | bleach }}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
       {% endif %}
 
-      {% if DB_Template.references %}
+      {% if DB_template_query.ref %}
       <div class="row">
         <div class="col-md-12">
 
@@ -304,14 +287,13 @@
 
                 </div>
                 <div class="card-body">
-                  {{ DB_Template.references|safe_markdown | bleach}}
+                  {{ DB_template_query.ref|safe_markdown | bleach}}
                 </div>
               </div>
 
         </div>
-      </div> 
+      </div>
       {% endif %}
-
 
       </div>
     </section>
@@ -321,4 +303,24 @@
 
 {% block javascripts %}
   {{ block.super }}
+
+  <script>
+    function BookmarkToogle() {
+    $.ajax({
+        type: 'GET',
+        url: "{% url 'bookmark_toggle' 'finding_template' DB_template_query.pk %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        success : function(json) {
+          if (json.status == "created") {
+             $("#bookmark").css("color","blue");
+          }
+          if (json.status == "deleted") {
+             $("#bookmark").css("color","");
+          }
+        }
+    });
+  };
+</script>
 {% endblock javascripts %}

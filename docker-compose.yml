@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nginx:
     image: nginx
@@ -21,15 +19,30 @@ services:
       dockerfile: ./Dockerfile
     image: petereport_django
     container_name: petereport_django
+    environment:
+      - PETEREPORT_DJANGO_DEBUG=False
+      - PETEREPORT_DJANGO_AMIN_MODULE=False
+      - PETEREPORT_MEDIA_HOST=https://localhost
+      - PETEREPORT_MARTOR_UPLOAD_METHOD=MEDIA
+      - PETEREPORT_PDF_ENGINE=xelatex
+      - PETEREPORT_REPORT_TITLEPAGE_COLOR=ffffff
+      - PETEREPORT_DJANGO_SENDFILE_BACKEND=django_sendfile.backends.nginx
+      - PETEREPORT_DJANGO_LOG_LEVEL=DEBUG
+      - PETEREPORT_LOG_LEVEL=DEBUG
+      - PETEREPORT_DEBUG_PANDOC_ON_ERROR=True
+      - PETEREPORT_MARKDOWN_MEDIA_INCLUDE=LOCAL_FS
     command: bash -c "
       sleep 1 &&
       pipenv install --deploy --ignore-pipfile --python 3.9 &&
-      pip freeze && 
+      pip freeze &&
       pipenv run ./app/manage.py makemigrations &&
       pipenv run ./app/manage.py migrate &&
+      pipenv run ./app/manage.py createfts &&
       pipenv run ./app/manage.py loaddata ./app/config/cwe-list.json &&
+      pipenv run ./app/manage.py loaddata ./app/config/cwe-default.json &&
       pipenv run ./app/manage.py loaddata ./app/config/owasp-list.json &&
-      pipenv run gunicorn --chdir ./app petereport.wsgi:application --timeout 120 --graceful-timeout 60 --bind 0.0.0.0:8000"
+      pipenv run ./app/manage.py loaddata ./app/config/owasp-default.json &&
+      pipenv run gunicorn --chdir ./app petereport.wsgi:application --timeout 550 --graceful-timeout 60 --bind 0.0.0.0:8000"
     volumes:
       - .:/opt/petereport
     expose:

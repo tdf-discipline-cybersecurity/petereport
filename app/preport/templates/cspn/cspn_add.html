@@ -1,0 +1,127 @@
+{% extends 'home/template.html' %}
+{% load i18n %}
+{% load bleach_tags %}
+
+{% block title %} {% translate "CSPN Evaluations" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>{% translate "CSPN Evaluation" %}</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'customer_view' DB_report.product.customer.pk %}">{{ DB_report.product.customer.name}}</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'product_view' DB_report.product.pk %}">{{ DB_report.product.name}}</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'report_view' DB_report.pk %}">{{ DB_report.title}}</a></li>
+          <li class="breadcrumb-item active">
+            {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+              <a href="javascript: document.getElementById('form-object').submit();" class="fas fa-save">&nbsp;</a>
+            {% endif %}
+          {% translate "Add CSPN Evaluation" %}</a></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+
+            <div class="card card-outline card-danger">
+              <div class="card-header">
+                <h3 class="card-title">{% translate "CSPN Evaluation" %}</h3>
+              </div>
+
+
+              <form role="form" method="post" enctype="multipart/form-data" id="form-object">
+                {% csrf_token %}
+                <div class="card-body">
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Stage</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.stage }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Status</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.status }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Evaluation" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.evaluation }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Expert Notice" %}</label>
+                    <div class="col-md-8 col-sm-8 col-xs-10">
+                      {{ form.expert_notice }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Tags</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.tags }}
+                   </div>
+
+                </div>
+
+                {% if form.errors %}
+                   {% for field in form %}
+                       {% for error in field.errors %}
+                          <div class="container">
+                            <div class="col-md-12 col-sm-12 col-xs-12">
+                              <div class="alert alert-danger alert-dismissible ">
+                              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                              <h5><i class="icon fas fa-ban"></i> Error</h5>
+                              {{ field.name }}: {{ error|escape }}
+                              </div>
+                            </div>
+                          </div>
+                       {% endfor %}
+                   {% endfor %}
+                {% endif %}
+
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-danger" value="Save" name="_finish">Save and finish</button>
+                  <button type="submit" class="btn btn-primary" value="Next" name="_next">Save and add a new CSPN Evaluation</button>
+                </div>
+              </form>
+            </div>
+
+        </div>
+      </div>
+    </div>
+</section>
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super}}
+
+  <script>
+$(document).ready(function() {
+    $('.select2CSPNEvaluationStage').select2();
+});
+</script>
+{% endblock javascripts %}

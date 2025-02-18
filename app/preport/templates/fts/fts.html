@@ -1,0 +1,114 @@
+{% extends 'home/template.html' %}
+{% load i18n %}
+{% load bleach_tags %}
+
+{% load app_filters %}
+
+{% block title %} {% translate "Search" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>{% translate "Search" %}</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+          <li class="breadcrumb-item active">{% translate "Search" %}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card card-outline card-primary">
+          <div class="card-header">
+            <h3 class="card-title">{% translate "Query" %} (<a href="https://www.sqlite.org/fts5.html#full_text_query_syntax">{% translate "SQLite Full-text Query Syntax" %}</a>)</h3>
+          </div>
+          <form role="form" action="" method="POST">
+            {% csrf_token %}
+            {{form.q}}
+            {{form.models}}
+            <button type="submit" class="btn btn-primary"  name="search">Search</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="card card-outline card-primary">
+      <div class="card-header">
+        <h3 class="card-title">{{ search_results|length }} Result{{ search_results_count|pluralize:"s" }}</h3>
+
+        <div class="card-tools">
+          <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table id="searchresultslist" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                  <th style="width: 15%">{% translate "Type" %}</th>
+                  <th style="width: 50%">{% translate "Label" %}</th>
+                  <th style="width: 35%">{% translate "Data" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            {% for result in search_results %}
+              <tr>
+                <td>
+                {% if result.1 == "settings" %}
+                  <p class="nav-icon fas fa-cogs text-info"> Configuration</p>
+                {% elif result.1 == "customer" %}
+                  <p class="nav-icon fas fa-building text-purple"> Customer</p>
+                {% elif result.1 == "product" %}
+                  <p class="nav-icon fa fa-cube text-primary"> Product</p>
+                {% elif result.1 == "report" %}
+                  <p class="nav-icon fa fa-file-invoice text-success"> Report</p>
+                {% elif result.1 == "cspn_evaluation" %}
+                  <p class="nav-icon fa fa-file-contract text-success"> CSPN Evaluation</p>
+                {% elif result.1 == "deliverable" %}
+                  <p class="nav-icon fas fa-download text-success"> Deliverable</p>
+                {% elif result.1 == "finding" %}
+                  <p class="nav-icon fas fa-bug text-danger"> Finding</p>
+                {% elif result.1 == "finding_template" %}
+                  <p class="nav-icon fas fa-medical text-danger"> Finding Template</p>
+                {% elif result.1 == "custom_field" %}
+                  <p class="nav-icon fas fa-bug text-danger"> Custom Field</p>
+                {% elif result.1 == "cwe" %}
+                  <p class="nav-icon fas fa-fingerprint text-warning"> CWE</p>
+                {% elif result.1 == "owasp" %}
+                  <p class="nav-icon fas fa-fingerprint text-warning"> OWASP</p>
+
+                {% else %}
+                  {{ result.1 }}
+                {% endif %}
+                </td>
+                <td><a href="{{result.0}}">{{ result.2 }}</a></td>
+                <td>{% autoescape off %}{{ result.3 }}{% endautoescape %}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+{% endblock content %}

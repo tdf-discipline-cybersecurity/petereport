@@ -9,9 +9,7 @@
   {{ block.super }}
 {% endblock stylesheets %}
 
-
 {% block content %}
-
 
     <br>
 
@@ -19,60 +17,50 @@
       <div class="container-fluid">
 
       <div class="row">
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
+        <div class="col-lg-2 col-xs-6">
+          <a style="display:block" href="{% url 'customer_list' %}">
           <div class="small-box bg-purple">
             <div class="inner">
-              <h3>{{total_customers}}</h3> 
+              <h3>{{total_customers}}</h3>
               <p>{% translate "Customer" %}{{ total_customers|pluralize:"s" }}</p>
             </div>
             <div class="icon">
-              <i class="fas fa-user-circle"></i>
+              <i class="fas fa-building"></i>
             </div>
           </div>
+          </a>
         </div>
 
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
+        <div class="col-lg-2 col-xs-6">
+          <a style="display:block" href="{% url 'product_list' %}">
           <div class="small-box bg-info">
             <div class="inner">
-              <h3>{{total_products}}</h3> 
+              <h3>{{total_products}}</h3>
               <p>{% translate "Product" %}{{ total_products|pluralize:"s" }}</p>
             </div>
             <div class="icon">
               <i class="fas fa-cube"></i>
             </div>
           </div>
+          </a>
         </div>
 
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
+        <div class="col-lg-2 col-xs-6">
+          <a style="display:block" href="{% url 'report_list' %}">
           <div class="small-box bg-green">
             <div class="inner">
               <h3>{{total_reports}}</h3>
               <p>{% translate "Report" %}{{ total_reports|pluralize:"s" }}</p>
             </div>
             <div class="icon">
-              <i class="fa fa-file-code"></i>
+              <i class="fa fa-file-invoice"></i>
             </div>
           </div>
+          </a>
         </div>
 
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
-          <div class="small-box bg-blue">
-            <div class="inner">
-              <h3>{{total_deliverables}}</h3>
-              <p>{% translate "Deliverable" %}{{ total_deliverables|pluralize:"s" }}</p>
-            </div>
-            <div class="icon">
-              <i class="fa fa-file"></i>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
+        <div class="col-lg-3 col-xs-6">
+          <a style="display:block" href="{% url 'finding_list' %}">
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3>{{count_product_findings_total}}</h3>
@@ -82,10 +70,11 @@
               <i class="fa fa-bug"></i>
             </div>
           </div>
+          </a>
         </div>
 
-        <div class="col-lg-2 col-md-3 col-xs-6">
-
+        <div class="col-lg-3 col-xs-6">
+          <a style="display:block" href="{% url 'finding_list' %}">
           <div class="small-box bg-red">
             <div class="inner">
               <h3>{{count_product_findings_critical_high}}</h3>
@@ -96,19 +85,18 @@
             </div>
           </div>
         </div>
-
+        </a>
       </div>
 
 
 
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
 
             <div class="card card-outline card-success">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Overall Breakdown by Categories" %}</b>
+                    {% translate "Overall Breakdown by CWE Categories" %}
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -126,44 +114,15 @@
 
 
         </div>
-
-        
-          <div class="col-md-4">
-
-            <div class="card card-outline card-success">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Vulnerabilities by status" %}</b>
-                  </h3>
-                  <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                  </div>
-
-                </div>
-
-                <div class="card-body">
-                    <div id="StatusPieDoughnutEcharts" style="width:100%; height:400px;"></div>
-                </div>
-
-              </div>
-
-        </div>
-
-
       </div>
 
-
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
 
             <div class="card card-outline card-success">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Overall Breakdown by OWASP Top Ten Application Security Risks" %}</b>
+                    {% translate "Overall Breakdown by OWASP Categories" %}
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -174,37 +133,13 @@
                 </div>
 
                 <div class="card-body">
-                    <div id="OWASPPieChartEcharts" style="width:100%; height:400px;"></div>
+                  <div id="OWASPPieChartEcharts" style="width:100%; height:400px;"></div>
                 </div>
 
               </div>
 
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="card card-outline card-success">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Vulnerabilities by severity" %}</b>
-                  </h3>
-                  <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                  </div>
-
-                </div>
-
-                <div class="card-body">
-                    <div id="VulnPieDoughnutEcharts" style="width:100%; height:400px;"></div>
-                </div>
-
-              </div>
 
         </div>
-
       </div>
 
 
@@ -212,7 +147,7 @@
         <div class="card-header">
           <h3 class="card-title">
             <i class="far fa-list-alt"></i>
-            <b>{% translate "Top 10 risk findings" %}</b>
+            {% translate "Top 10 risk findings" %}
           </h3>
 
           <div class="card-tools">
@@ -223,14 +158,17 @@
         </div>
 
         <div class="card-body">
-          
-            <table class="table">
+
+            <table id="findinglist" class="table">
                   <thead>
                     <tr>
                       <th class="text-center" style="width: 10%">{% translate "Customer" %}</th>
                       <th class="text-center" style="width: 10%">{% translate "Product" %}</th>
-                      <th class="text-center" style="width: 30%">{% translate "Report" %}</th>
+                      <th class="text-center" style="width: 15%">{% translate "Report" %}</th>
+                      <th class="text-center" style="width: 10%">{% translate "Status" %}</th>
                       <th class="text-center" style="width: 40%">{% translate "Finding" %}</th>
+                      <th class="text-center" style="width: 5%">{% translate "CWE" %}</th>
+                      <th class="text-center" style="width: 5%">{% translate "OWASP" %}</th>
                       <th class="text-center" style="width: 10%">{% translate "Risk Score" %}</th>
                     </tr>
                   </thead>
@@ -239,37 +177,100 @@
 
                   {% for finding in DB_finding_query %}
                     <tr>
-
-                      <td class=" last" align="center"><a href="{% url 'customer_view' finding.report.product.customer.pk %}">{{ finding.report.product.customer.name }}</a></td>
-
+                      <td class=" last" align="center"><a href="{% url 'customer_view' finding.report.product.customer.pk %}}">{{ finding.report.product.customer.name }}</a></td>
                       <td class=" last" align="center"><a href="{% url 'product_view' finding.report.product.pk %}">{{ finding.report.product.name }}</a></td>
-
                       <td class=" last" align="center"><a href="{% url 'report_view' finding.report.pk %}">{{ finding.report.title }}</a></td>
+                      <td class=" last" align="center"><a href="{% url 'finding_view' finding.pk %}">{{ finding.status }}</a></td>
 
                       {% if finding.cvss_score >= 9 %}
                         <td class=" last"><b><a href="{% url 'finding_view' finding.pk %}" style="color:#CC0000"><i class="fa fa-exclamation-circle"></i> {{finding.title}}</a></b></td>
-                        
+                        <td>
+                          {% if finding.cwe.cwe_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if finding.owasp.owasp_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                          {% endif %}
+                        </td>
                         <td><span class="badge bg-danger" style="font-size:15px;margin-left: 5%;">Critical {{ finding.cvss_score }}</span></td>
                       {% elif finding.cvss_score >= 7 %}
                         <td class=" last"><b><a href="{% url 'finding_view' finding.pk %}" style="color:#F20000"><i class="fa fa-exclamation-triangle"></i> {{finding.title}}</a></b></td>
-                        
+                        <td>
+                          {% if finding.cwe.cwe_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if finding.owasp.owasp_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                          {% endif %}
+                        </td>
                         <td><span class="badge bg-danger" style="font-size:15px;margin-left: 5%;">High {{ finding.cvss_score }}</span></td>
                       {% elif finding.cvss_score >= 4 %}
                         <td class=" last"><b><a href="{% url 'finding_view' finding.pk %}" style="color:#FC7F03"><i class="fa fa-exclamation-triangle"></i> {{finding.title}}</a></b></td>
-                        
+                        <td>
+                          {% if finding.cwe.cwe_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if finding.owasp.owasp_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                          {% endif %}
+                        </td>
                         <td><span class="badge bg-warning" style="font-size:15px;margin-left: 5%;">Medium {{ finding.cvss_score }}</span></td>
                       {% elif finding.cvss_score >= 0.1 %}
                         <td class=" last"><b><a href="{% url 'finding_view' finding.pk %}" style="color:#05B04F"><i class="fa fa-bug"></i> {{finding.title}}</a></b></td>
-                        
+                        <td>
+                          {% if finding.cwe.cwe_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if finding.owasp.owasp_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                          {% endif %}
+                        </td>
                         <td><span class="badge bg-success" style="font-size:15px;margin-left: 5%;">Low {{ finding.cvss_score }}</span></td>
                       {% else %}
                         <td class=" last"><b><a href="{% url 'finding_view' finding.pk %}" style="color:#45A7F7"><i class="fa fa-bug"></i> {{finding.title}}</a></b></td>
-                        
+                        <td>
+                          {% if finding.cwe.cwe_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if finding.owasp.owasp_id == -1 %}
+                            -
+                          {% else %}
+                            <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                          {% endif %}
+                        </td>
                         <td><span class="badge bg-info" style="font-size:15px;margin-left: 5%;">Info {{ finding.cvss_score }}</span></td>
                       {% endif %}
 
                   {% endfor %}
-                    
+
                   </tbody>
             </table>
 
@@ -279,8 +280,6 @@
 
       </div>
     </section>
-
-
 
 {% endblock content %}
 
@@ -299,8 +298,8 @@
             var obj = this, args = arguments;
             function delayed () {
                 if (!execAsap)
-                    func.apply(obj, args); 
-                timeout = null; 
+                    func.apply(obj, args);
+                timeout = null;
             }
 
             if (timeout)
@@ -308,21 +307,16 @@
             else if (execAsap)
                 func.apply(obj, args);
 
-            timeout = setTimeout(delayed, threshold || 100); 
+            timeout = setTimeout(delayed, threshold || 100);
         };
     };
 
-    // smartresize 
+    // smartresize
     jQuery.fn[sr] = function(fn){  return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
 
 })(jQuery,'smartresize');
-/**
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
-var CURRENT_URL = window.location.href.split('#')[0].split('?')[0],
+var CURRENT_URL = document.location.href.split('#')[0].split('?')[0],
     $BODY = $('body'),
     $MENU_TOGGLE = $('#menu_toggle'),
     $SIDEBAR_MENU = $('#sidebar-menu'),
@@ -333,12 +327,10 @@ var CURRENT_URL = window.location.href.split('#')[0].split('?')[0],
     $FOOTER = $('footer');
 </script>
 
-
-
 <script type="text/javascript">
     var chart_CWE = echarts.init(document.getElementById('CWEPieChartEcharts'));
 
-    var option = {
+    var option_CWE = {
             tooltip: {
                 trigger: 'item',
                 formatter: '{b} <br>{c}'
@@ -349,7 +341,7 @@ var CURRENT_URL = window.location.href.split('#')[0].split('?')[0],
                   saveAsImage: {
                     show: false,
                     title: "Save Image",
-                    name: "Breakdown_by_Categories"
+                    name: "Breakdown_by_CWE_Categories"
                   }
               }
             },
@@ -375,153 +367,51 @@ var CURRENT_URL = window.location.href.split('#')[0].split('?')[0],
             ]
     };
 
-    chart_CWE.setOption(option);
+    chart_CWE.setOption(option_CWE);
 
 </script>
 
-
-
 <script type="text/javascript">
-    var chart_OWASP = echarts.init(document.getElementById('OWASPPieChartEcharts'));
+  var chart_OWASP = echarts.init(document.getElementById('OWASPPieChartEcharts'));
 
-    var option = {
-            tooltip: {
-                trigger: 'item',
-                formatter: '{b} <br>{c}'
-            },
-            toolbox: {
-              show: true,
-              feature: {
-                  saveAsImage: {
-                    show: false,
-                    title: "Save Image",
-                    name: "Breakdown_by_OWASP_Categories"
+  var option_OWASP = {
+          tooltip: {
+              trigger: 'item',
+              formatter: '{b} <br>{c}'
+          },
+          toolbox: {
+            show: true,
+            feature: {
+                saveAsImage: {
+                  show: false,
+                  title: "Save Image",
+                  name: "Breakdown_by_OWASP_Categories"
+                }
+            }
+          },
+          series: [
+              {
+                  name: 'OWASP',
+                  type: 'pie',
+                  radius: '70%',
+                  animation: false,
+
+                  data: {{owasp_categories|safe}},
+                  labelLine: {
+                      show: true
+                  },
+                  emphasis: {
+                      itemStyle: {
+                          shadowBlur: 10,
+                          shadowOffsetX: 0,
+                          shadowColor: 'rgba(0, 0, 0, 0.5)'
+                      }
                   }
               }
-            },
-            series: [
-                {
-                    name: 'OWASP',
-                    type: 'pie',
-                    radius: '70%',
-                    animation: false,
-
-                    data: {{owasp_categories|safe}},
-                    labelLine: {
-                        show: true
-                    },
-                    emphasis: {
-                        itemStyle: {
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowColor: 'rgba(0, 0, 0, 0.5)'
-                        }
-                    }
-                }
-            ]
-    };
-
-    chart_OWASP.setOption(option);
-
-</script>
-
-
-
-<script type="text/javascript">
-    var chart_Vuln = echarts.init(document.getElementById('VulnPieDoughnutEcharts'));
-
-    var option = {
-          tooltip: {
-            trigger: 'item'
-          },
-          legend: {
-            top: '5%',
-            left: 'center'
-          },
-          series: [
-            {
-              name: '{% translate "Vulnerabilities" %}',
-              type: 'pie',
-              radius: ['40%', '70%'],
-              avoidLabelOverlap: false,
-              itemStyle: {
-                borderRadius: 10,
-                borderColor: '#fff',
-                borderWidth: 2
-              },
-              label: {
-                show: false,
-                position: 'center'
-              },
-              emphasis: {
-                label: {
-                  show: false,
-                  fontSize: 40,
-                  fontWeight: 'bold'
-                }
-              },
-              labelLine: {
-                show: false
-              },
-              data: [
-                { value: {{count_product_findings_critical}}, name: '{% translate "Critical" %}', itemStyle: {color: '#cc0000'} },
-                { value: {{count_product_findings_high}}, name: '{% translate "High" %}', itemStyle: {color: '#ff403d'}  },
-                { value: {{count_product_findings_medium}}, name: '{% translate "Medium" %}', itemStyle: {color: '#fc7f03'}  },
-                { value: {{count_product_findings_low}}, name: '{% translate "Low" %}', itemStyle: {color: '#05b04f'}  },
-                { value: {{count_product_findings_info}}, name: '{% translate "Info" %}', itemStyle: {color: '#45a7f7'}  }              ]
-            }
           ]
-        };
+  };
 
-    chart_Vuln.setOption(option);
-
-</script>
-
-
-<script type="text/javascript">
-    var chart_status = echarts.init(document.getElementById('StatusPieDoughnutEcharts'));
-
-    var option = {
-          tooltip: {
-            trigger: 'item'
-          },
-          legend: {
-            top: '5%',
-            left: 'center'
-          },
-          series: [
-            {
-              name: '{% translate "Status" %}',
-              type: 'pie',
-              radius: ['40%', '70%'],
-              avoidLabelOverlap: false,
-              itemStyle: {
-                borderRadius: 10,
-                borderColor: '#fff',
-                borderWidth: 2
-              },
-              label: {
-                show: false,
-                position: 'center'
-              },
-              emphasis: {
-                label: {
-                  show: false,
-                  fontSize: 40,
-                  fontWeight: 'bold'
-                }
-              },
-              labelLine: {
-                show: false
-              },
-              data: [
-                { value: {{count_open_findings}}, name: '{% translate "Open" %}', itemStyle: {color: 'blue'} },
-                { value: {{count_closed_findings}}, name: '{% translate "Closed" %}', itemStyle: {color: 'green'} }              ]
-            }
-          ]
-        };
-
-    chart_status.setOption(option);
+  chart_OWASP.setOption(option_OWASP);
 
 </script>
 

@@ -1,6 +1,23 @@
 Changelog
 =========
 
+## Version 1.4.3
+
+### Enhancements and Bugfixes:
+ 
+* HTML Pages smaller
+* Bookmark
+* Review Attack Flow, now linked to zero or many findings
+* Review Appendix, now linked to zero or many findings
+* Duplicate Finding|CSPN|Appendix|AttackFlow to another report
+* Download function generic (PDF, markdown), HTML and Jupyter deleted
+* Wait Images
+* Reference with https://lierdakil.github.io/pandoc-crossref/
+  * Creation {#sec:MyRef} Caution! No -, _ or other strange chars into reference name
+  * Call @sec:MyRef
+  * Finding, Appendix, AttackFlow and CSPN are referenced by default (@sec:Finding123) with 123 the item PK
+*Upload Report to Cryptobox
+
 ## Version 1.4.2
 
 ### Enhancements and Bugfixes:
@@ -27,6 +44,7 @@ Changelog
 * Multiple output templates
 * Findings OWASP top 10 categories [#5](https://github.com/1modm/petereport/issues/5)
 * Settings section configuration added
+
 
 ## Version 1.3.3
 

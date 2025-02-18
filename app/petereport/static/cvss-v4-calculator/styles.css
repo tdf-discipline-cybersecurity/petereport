@@ -67,7 +67,7 @@ mark {
   border-radius: 0.3rem;
 }
 
-.cvss-btn-m {
+.btn-m {
     width:100%;
     display:block;
     border-radius: 0.3rem;
@@ -85,28 +85,28 @@ Useful tools:
   https://www.rapidtables.com/convert/color/hex-to-rgb.html
 */
 
-.cvss-btn {
+.btn {
   background: #f2f2f2;
   border:.05rem solid #999999;                  
   border-radius: 0.2rem;
   color: #666666;                                
 }
 
-.cvss-btn:focus,
-.cvss-btn:hover {
+.btn:focus,
+.btn:hover {
   background: #666666;                           
   border-color: #666666;                         
   color: #ffffff;
 } 
 
-.cvss-btn.active,
-.cvss-btn:active {
+.btn.active,
+.btn:active {
   background: #060;                           
   border-color: #060;                         
   color: #fff;
 }
 
-.cvss-btn.cvss-btn-primary {
+.btn.btn-primary {
   background: #090;                           
   border-color: #090;                         
   border: 0.05rem solid #060;
@@ -114,15 +114,15 @@ Useful tools:
   color: #fff
 }
 
-.cvss-btn.cvss-btn-primary:focus,
-.cvss-btn.cvss-btn-primary:hover {
+.btn.btn-primary:focus,
+.btn.btn-primary:hover {
   background: #060;                           
   border-color: #060;                         
   color: #fff
 }
 
-.cvss-btn.cvss-btn-primary.active,
-.cvss-btn.cvss-btn-primary:active {
+.btn.btn-primary.active,
+.btn.btn-primary:active {
   background:#060;                           
   border-color:#060;                         
   color:#fff

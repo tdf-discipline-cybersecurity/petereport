@@ -11,20 +11,30 @@
 {% endblock stylesheets %}
 
 {% block content %}
-  
+
 
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
 
           <div class="col-sm-6">
-            <h1>{% translate "Product" %} {{ DB_product_query.name | bleach }}</h1>
+            <h1>{% translate "Product" %}</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
               <li class="breadcrumb-item"><a href="{% url 'customer_view' DB_product_query.customer.pk %}">{{ DB_product_query.customer.name | bleach}}</a></li>
-              <li class="breadcrumb-item active">{{ DB_product_query.name | bleach }}</li>
+              <li class="breadcrumb-item active">
+                {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                  <a href="{% url 'product_edit' DB_product_query.pk %}" class="fas fa-pencil-alt">&nbsp;</a>
+                {% endif %}
+                {{ DB_product_query.name | bleach }}
+                {% if bookmark_exists %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark" style="color:blue"></i>
+                {% else %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark"></i>
+                {% endif %}
+              </li>
             </ol>
           </div>
         </div>
@@ -42,11 +52,11 @@
 
           <div class="small-box bg-info">
             <div class="inner">
-              <h3>{{count_product_report}}</h3> 
+              <h3>{{count_product_report}}</h3>
               <p>{% translate "Report" %}{{ count_product_report|pluralize:"s" }}</p>
             </div>
             <div class="icon">
-              <i class="fas fa-file-code"></i>
+              <i class="fas fa-file-invoice"></i>
             </div>
           </div>
         </div>
@@ -93,7 +103,7 @@
           </div>
         </div>
       </div>
-  
+
 
 
       {% if DB_product_query.description %}
@@ -118,7 +128,90 @@
       </div>
       {% endif%}
 
+      {% if DB_product_query.recovery %}
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <dt>{% translate "Recovery" %}</dt>
+                  </h3>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <p>{{ DB_product_query.recovery | safe_markdown | bleach }}</p>
+                </div>
+              </div>
+        </div>
+      </div>
+      {% endif%}
 
+      {% if DB_product_query.installation %}
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <dt>{% translate "Installation" %}</dt>
+                  </h3>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <p>{{ DB_product_query.installation | safe_markdown | bleach }}</p>
+                </div>
+              </div>
+        </div>
+      </div>
+      {% endif%}
+
+      {% if DB_product_query.usage %}
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <dt>{% translate "Usage" %}</dt>
+                  </h3>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <p>{{ DB_product_query.usage | safe_markdown | bleach }}</p>
+                </div>
+              </div>
+        </div>
+      </div>
+      {% endif%}
+
+      
+
+      {% if product_tags %}
+      <div class="row">
+        <div class="col-md-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <dt>{% translate "Tags" %}</dt>
+                  </h3>
+                </div>
+                <ul class="list-group">
+                  <li class="list-group-item">{{ product_tags }}</li>
+                </ul>
+              </div>
+        </div>
+      </div>
+      {% endif%}
 
       <div class="card card-outline card-primary">
         <div class="card-header">
@@ -138,7 +231,10 @@
                     <th style="width: 20%">{% translate "ID" %}</th>
                     <th style="width: 35%">{% translate "Report" %}</th>
                     <th style="width: 5%">{% translate "Date" %}</th>
-                    <th style="width: 15%">{% translate "Findings" %}</th>
+                    <th style="width: 10%">{% translate "Findings" %}</th>
+                    {% if enable_cspn %}
+                    <th style="width: 10%">{% translate "CSPN Eval." %}</th>
+                    {% endif %}
                     <th style="width: 25%" class="text-center">{% translate "Actions" %}</th>
                   </tr>
               </thead>
@@ -146,70 +242,32 @@
 
               {% for report in DB_report_query %}
                   <tr>
-                    <td>{{ report.report_id | bleach }} </td>
-                    <td>{{ report.title | bleach }} </td>
-                    <td>{{ report.creation_date | date:"d-m-Y" }} </td>
+                    <td><a href="{% url 'report_view' report.pk %}">{{ report.report_id }}</a></td>
+                    <td><a href="{% url 'report_view' report.pk %}">{{ report.title }}</a></td>
+                    <td>{{ report.creation_date | date:"Y-m-d" }} </td>
                     <td>
                       <span class="pull-right badge bg-red">{{ report.db_finding_set.count }}</span> {% translate "Finding" %}{{ report.db_finding_set.count|pluralize:"s" }}
                     </td>
+                    {% if enable_cspn %}
+                    <td>
+                      <span class="pull-right badge bg-primary">{{ report.db_cspn_evaluation_set.count }}</span> {% translate "CSPN" %}{{ report.db_cspn_evaluation_set.count|pluralize:"s" }}
+                    </td>
+                    {% endif %}
                     <td class="text-center">
-                        <a href="/report/view/{{ report.pk }}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
-                        
+                        <a href="{% url 'report_view' report.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
+
                         {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                          <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target=".mm-modal-clone-{{report.pk}}"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
-                          <a href="/report/edit/{{ report.pk }}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a> 
-                          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-{{report.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %} </button>
+                          <a href="{% url 'report_edit' report.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                          <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{report.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-Report"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                          <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{report.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Report"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                         {% endif %}
                     </td>
                   </tr>
-                  
-
-                        <div class="modal modal-danger fade mm-modal-{{report.pk}}" id="modal-danger">
-                          <div class="modal-dialog">
-                            <div class="modal-content bg-danger">
-                              <div class="modal-header">
-                                <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                <p>{% translate "Delete Report" %}&hellip;</p>
-                              </div>
-                              <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-
-                                <button type="button" onclick="DeleteID({{report.pk}});" class="btn btn-outline-light">{% translate "Delete Report" %}</button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-
-                        <div class="modal modal-warning fade mm-modal-clone-{{report.pk}}" id="modal-warning">
-                          <div class="modal-dialog">
-                            <div class="modal-content bg-warning">
-                              <div class="modal-header">
-                                <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                <p>{% translate "Clone Report and Findings" %}&hellip;</p>
-                              </div>
-                              <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                <button type="button" onclick="DuplicateID({{report.pk}});" class="btn btn-outline-light">{% translate "Clone Report and Findings" %}</button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
                 {% endfor %}
-
               </tbody>
           </table>
+          {% include "home/template_delete_item.html" with item="Report" %}
+          {% include "home/template_duplicate_item.html" with item="Report" %}
         </div>
       </div>
     </div>
@@ -225,48 +283,121 @@
 
 <script>
   $(function () {
+    $('#reportlist thead tr')
+    .clone(true)
+    .addClass('filters')
+    .appendTo('#reportlist thead');
     $("#reportlist").DataTable({
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
+      "responsive": true,
+      "lengthChange": false,
       "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#reportlist_wrapper .col-md-6:eq(0)');
   });
-</script>
 
-<script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "/en/report/delete/",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
-
-            success : function(json) {
-              document.location.href = "{% url 'product_view' DB_product_query.pk %}";
-            }
-        })
-  }
-
-
-  function DuplicateID(dup_id) {
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
+  function Delete_Report() {
+    var itemId = $(".item-id #itemID").val();
     $.ajax({
         type: 'POST',
-        url: "{% url 'report_findings_duplicate' %}",
+        url: "{% url 'report_delete' %}",
         headers:{
           "X-CSRFToken": '{{ csrf_token }}'
         },
-        data : { 'duplicate_id': dup_id},
+        data : { 'delete_id': itemId},
 
         success : function(json) {
           document.location.href = "{% url 'product_view' DB_product_query.pk %}";
         }
     })
-  }
+  };
+
+  function Duplicate_Report() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'report_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'product_view' DB_product_query.pk %}";
+        }
+    })
+  };
+
+  function BookmarkToogle() {
+    $.ajax({
+        type: 'GET',
+        url: "{% url 'bookmark_toggle' 'product' DB_product_query.pk %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        success : function(json) {
+          if (json.status == "created") {
+             $("#bookmark").css("color","blue");
+          }
+          if (json.status == "deleted") {
+             $("#bookmark").css("color","");
+          }
+        }
+    });
+  };
 </script>
 
 {% endblock javascripts %}

@@ -44,10 +44,10 @@
           <table id="owasplist" class="table table-bordered table-hover">
               <thead>
                   <tr>
-                      <th style="width: 25%" class="text-center">
+                      <th style="width: 25%">
                           {% translate "Title" %}
                       </th>
-                      <th style="width: 60%" class="text-center">
+                      <th style="width: 60%">
                           {% translate "Description" %}
                       </th>
                       <th style="width: 15%" class="text-center">{% translate "Actions" %}</th>
@@ -69,39 +69,14 @@
                     <td class="text-center">
                         {% if user.groups.all.0|stringformat:'s' == "administrator" %}
                           <a href="{% url 'owasp_edit' owasp.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
-                          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-{{owasp.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %} </button>
+                          <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{owasp.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-OWASP"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                         {% endif %}
                     </td>
-
                     </tr>
-
-
-                        <div class="modal modal-danger fade mm-modal-{{owasp.pk}}" id="modal-danger">
-                          <div class="modal-dialog">
-                            <div class="modal-content bg-danger">
-                              <div class="modal-header">
-                                <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                <p>{% translate "Delete OWASP" %}&hellip;</p>
-                              </div>
-                              <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                <button type="button" onclick="DeleteID({{cowaspwe.pk}});" class="btn btn-outline-light">{% translate "Delete OWASP" %}</button>
-
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
                   {% endfor %}
-
-
               </tbody>
           </table>
+          {% include "home/template_delete_item.html" with item="OWASP" %}
         </div>
 
       </div>
@@ -118,12 +93,64 @@
 
 <script>
   $(function () {
+    $('#owasplist thead tr')
+    .clone(true)
+    .addClass('filters')
+    .appendTo('#owasplist thead');
     $("#owasplist").DataTable({
       "paging": true,
       "searching": true,
       "responsive": true,
       "lengthChange": false,
       "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#owasplist_wrapper .col-md-6:eq(0)');
   });
@@ -131,19 +158,24 @@
 
 
 <script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'owasp_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
+  function Delete_OWASP() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'owasp_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
 
-            success : function(json) {
-              document.location.href = "{% url 'owasp_list' %}";
-            }
-        })
+        success : function(json) {
+          document.location.href = "{% url 'owasp_list' %}";
+        }
+    })
   }
 </script>
 {% endblock javascripts %}

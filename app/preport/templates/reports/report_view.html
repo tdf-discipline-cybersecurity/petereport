@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load martortags %}
 {% load bleach_tags %}
+{% load startswith %}
 
 {% block title %} {% translate "Report Details" %} {% endblock title %}
 
@@ -11,97 +12,111 @@
 {% endblock stylesheets %}
 
 {% block content %}
-  
+
 
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
 
           <div class="col-sm-6">
-            <h4>{{ DB_report_query.title | bleach}} - {{ DB_report_query.report_id | bleach}}</h4>
+            <h4>Report</h4>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
               <li class="breadcrumb-item"><a href="{% url 'customer_view' DB_report_query.product.customer.pk %}">{{ DB_report_query.product.customer.name | bleach}}</a></li>
               <li class="breadcrumb-item"><a href="{% url 'product_view' DB_report_query.product.pk %}">{{ DB_report_query.product.name | bleach}}</a></li>
-              <li class="breadcrumb-item active">{{ DB_report_query.title | bleach}}</li>
+              <li class="breadcrumb-item active">
+                {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                  <a href="{% url 'report_edit' DB_report_query.pk %}" class="fas fa-pencil-alt">&nbsp;</a>
+                {% endif %}
+                {{ DB_report_query.title | bleach}}
+                {% if bookmark_exists %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark" style="color:blue"></i>
+                {% else %}
+                  &nbsp;<i id="bookmark" onClick="BookmarkToogle(this)" class="fa fa-bookmark"></i>
+                {% endif %}
+              </li>
             </ol>
           </div>
         </div>
 
 
-         <br>
+        <br>
 
         <div class="row">
             <div class="col-md-5">
-              <a href="/report/findings/{{ DB_report_query.pk }}"><button type="button" class="btn btn-danger"><i class="fa fa-bug"></i> {% translate "Findings" %}</button></a>
-              <a href="/report/appendix/{{ DB_report_query.pk }}"><button type="button" class="btn btn-success"><i class="fa fa-folder"></i> {% translate "Appendix" %}</button></a>
-              <a href="/report/attackflow/{{ DB_report_query.pk }}"><button type="button" class="btn btn-warning"><i class="fa fa-sitemap"></i> {% translate "Attack Flows" %}</button></a>
+              <a href="{% url 'report_findings' DB_report_query.pk %}"><button type="button" class="btn btn-danger"><i class="fa fa-bug"></i> {% translate "Findings" %}</button></a>
+              <a href="{% url 'report_appendix' DB_report_query.pk %}"><button type="button" class="btn btn-success"><i class="fa fa-folder"></i> {% translate "Appendix" %}</button></a>
+              <a href="{% url 'report_attackflows' DB_report_query.pk %}"><button type="button" class="btn btn-warning"><i class="fa fa-sitemap"></i> {% translate "Attack Flows" %}</button></a>
+              {% if enable_cspn %}
+              <a href="{% url 'report_cspn_evaluations' DB_report_query.pk %}"><button type="button" class="btn btn-primary"><i class="fa fa-check-square"></i> {% translate "CSPN Evaluations" %}</button></a>
+              {% endif %}
 
             </div>
 
-
-
-            <div class="col-md-7 text-right">
-
-              <div class="btn-group">
-                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-download"></i> {% translate "Markdown" %}</button>
-
-                  {% if 'markdown' in templates_directories %}
-                    <div class="dropdown-menu" style="">
-                      {% for template in templates_directories.markdown %}
-                        <button class="dropdown-item" onclick="SaveSummaryImage('Markdown', '{{template}}');">Template > {{ template }}</button>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-              </div>
-
-              <div class="btn-group">
-                <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-download"></i> {% translate "PDF" %}</button>
-
+            <div class="input-group col-md-7 text-right">
+                <select style="margin-right: 2px" class="custom-select" id="exportSelect">
+                  <option value="" selected="selected" id="chooseOptionSelect">Choose your Export...</option>
+                  <option value="CSV">CSV</option>
                   {% if 'pdf' in templates_directories %}
-                    <div class="dropdown-menu" style="">
-                      {% for template in templates_directories.pdf %}
-                        <button class="dropdown-item" onclick="SaveSummaryImage('PDF', '{{template}}');">Template > {{ template }}</button>
-                      {% endfor %}
-                    </div>
+                  <optgroup label="PDF">
+                    {% for cst in templates_directories.pdf %}
+                    <option value="{{ cst }}" export-type="pdf">PDF > {{ cst }}</option>
+                    {% endfor %}
+                  </optgroup>
                   {% endif %}
-              </div>
-
-              <div class="btn-group">
-                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-download"></i> {% translate "HTML" %}</button>
-
-                  {% if 'html' in templates_directories %}
-                    <div class="dropdown-menu" style="">
-                      {% for template in templates_directories.html %}
-                        <a href="/report/download/html/{{template}}/{{ DB_report_query.pk }}"><button class="dropdown-item">Template > {{ template }}</button></a>
-                      {% endfor %}
-                    </div>
+                  {% if 'markdown' in templates_directories %}
+                  <optgroup label="Markdown">
+                    {% for cst in templates_directories.markdown %}
+                    <option value="{{ cst }}" export-type="markdown">Markdown > {{ cst }}</option>
+                    {% endfor %}
+                  </optgroup>
                   {% endif %}
-              </div>
-
-              <div class="btn-group">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-download"></i> {% translate "Jupyter" %}</button>
-
                   {% if 'jupyter' in templates_directories %}
-                    <div class="dropdown-menu" style="">
-                      {% for template in templates_directories.jupyter %}
-                        <a href="/report/download/jupyter/{{template}}/{{ DB_report_query.pk }}"><button class="dropdown-item">Template > {{ template }}</button></a>
-                      {% endfor %}
-                    </div>
+                  <optgroup label="Jupyter">
+                    {% for cst in templates_directories.jupyter %}
+                    <option value="{{ cst }}" export-type="jupyter">Jupyter > {{ cst }}</option>
+                    {% endfor %}
+                  </optgroup>
                   {% endif %}
-              </div>
-
-
-              <a href="/findings/csv/{{ DB_report_query.pk }}"><button type="button" class="btn btn-success"><i class="fa fa-download"></i> {% translate "CSV" %}</button></a>
-
+                  {% if 'html' in templates_directories %}
+                  <optgroup label="HTML">
+                    {% for cst in templates_directories.html %}
+                    <option value="{{ cst }}" export-type="html">HTML > {{ cst }}</option>
+                    {% endfor %}
+                  </optgroup>
+                  {% endif %}
+                </select>
+                <button style="margin-right: 2px" type="button" class="btn btn-info" id="exportButton">{% translate "Export" %}</button>
             </div>
         </div>
 
-        <br>
-
-
+        <div class="modal modal-danger fade mm-savereport-modal" id="pleaseWaitDialogSaveReport" data-backdrop="static" data-keyboard="false" role="dialog">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h4 class="modal-title">Please wait, the deliverable is under preparation...</h4>
+                  </div>
+                  <div class="modal-body" style="width: 300px; height: 360px">
+                    <img id="waitSaveImage" class="center" style="display: block; max-width:280px; max-height:340px; width: auto; height: auto;" src="" />
+                  </div>
+              </div>
+          </div>
+        </div>
+        <div class="modal modal-warning fade mm-savereport-modal" id="errorDialogSaveReport" data-backdrop="static" data-keyboard="false role="dialog">
+          <div class="modal-dialog">
+            <div class="modal-content" style="width: 900px; height: 850px">
+              <div class="modal-header">
+                  <h4 class="modal-title">{% translate "Saving Deliverable Error" %}</h4>
+              </div>
+              <div class="modal-body">
+                <div id="responseErrorMessageSave"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      <br>
       </div>
     </section>
 
@@ -125,9 +140,7 @@
                       <i class="fas fa-minus"></i>
                     </button>
                   </div>
-
                 </div>
-
                 <div class="card-body">
 
                       <div class="row">
@@ -189,7 +202,7 @@
 
                         <h3>{% translate "Info" %}</h3>
                         </div>
-                      
+
                         <div class="col-2 text-center">
 
                             {% if count_findings_none > 0 %}
@@ -201,15 +214,11 @@
                         <h3>{% translate "None" %}</h3>
                         </div>
 
-
                       </div>
 
-        
                   <hr>
-
-
                   <div class="row">
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
                           <span class="info-box-number text-center text-muted">{% translate "Creation date" %}</span>
@@ -217,37 +226,29 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Report date" %}</span>
-                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.report_date|date:"d-m-Y" | safe | bleach}}</span>
+                          <span class="info-box-number text-center text-muted">{% translate "Report Dates" %}</span>
+                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.report_date|date:"Y-m-d" | safe | bleach}}</span>
+                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.audit_start|date:"Y-m-d" | safe | bleach}} → {{ DB_report_query.audit_end|date:"Y-m-d" | safe | bleach}}</span>
                         </div>
                       </div>
                     </div>
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Product" %}</span>
-                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.product.name | safe | bleach}}<span>
+                          <span class="info-box-number text-center text-muted">{% translate "Classification &amp; Status" %}</span>
+                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.classification | safe | bleach}}<span>
+                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.status | safe | bleach}}<span>
                         </span></span></div>
                       </div>
                     </div>
-                    <div class="col-8 col-sm-3">
-                      <div class="info-box bg-light">
-                        <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Customer" %}</span>
-                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.product.customer.name | safe | bleach}}<span>
-                        </span></span></div>
-                      </div>
-                    </div>
-
                   </div>
 
 
-
                   <div class="row">
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
                           <span class="info-box-number text-center text-muted">{% translate "Report" %}</span>
@@ -255,32 +256,24 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Findings" %}</span>
+                          <span class="info-box-number text-center text-muted">{% translate "Findings" %} ({% translate "CVSS Version" %} {{ DB_report_query.cvss_version | safe | bleach}})</span>
                           <span class="info-box-text text-center text-muted mb-0">{{ count_finding_query | safe | bleach}}</span>
                         </div>
                       </div>
                     </div>
-                    <div class="col-8 col-sm-3">
+                    <div class="col-12 col-sm-4">
                       <div class="info-box bg-light">
                         <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Audit dates" %}</span>
-                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.audit_start|date:"d-m-Y" | safe | bleach}} → {{ DB_report_query.audit_end|date:"d-m-Y" | safe | bleach}}<span>
-                        </span></span></div>
-                      </div>
-                    </div>
-                    <div class="col-8 col-sm-3">
-                      <div class="info-box bg-light">
-                        <div class="info-box-content">
-                          <span class="info-box-number text-center text-muted">{% translate "Report ID" %}</span>
-                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.report_id | safe | bleach}}<span>
+                          <span class="info-box-number text-center text-muted">{% translate "Report ID / Version" %}</span>
+                          <span class="info-box-text text-center text-muted mb-0">{{ DB_report_query.report_id | safe | bleach}} / 
+                          {{ DB_report_query.version | safe | bleach}}<span>
                         </span></span></div>
                       </div>
                     </div>
                   </div>
-
 
                   {% if DB_report_query.executive_summary %}
                   <div class="row">
@@ -293,16 +286,49 @@
                     </div>
                   </div>
                   {% endif %}
-                    
+
+                  {% if DB_report_query.audit_objectives %}
+                  <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-outline">
+                          <div class="card-body">
+                            {{ DB_report_query.audit_objectives | safe_markdown | bleach}}
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% if DB_report_query.approver %}
+                  <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-outline">
+                          <div class="card-body">
+                            {{ DB_report_query.approver | safe_markdown | bleach}}
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  {% if DB_report_query.author %}
+                  <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-outline">
+                          <div class="card-body">
+                            {{ DB_report_query.author | safe_markdown | bleach}}
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
 
                 </div>
               </div>
 
         </div>
       </div>
-
-
-
 
       <!-- ---------------------------------------- -->
 
@@ -322,28 +348,23 @@
 
                 </div>
                 <div class="card-body">
-                    
+
                   <center>
-                    <div id="SeveritybarChartEcharts" style="width:80%; height:500px;"></div>      
+                    <div id="SeveritybarChartEcharts" style="width:80%; height:500px;"></div>
                   </center>
 
                 </div>
               </div>
 
         </div>
-
-      </div> 
-
-
-
+      </div>
 
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
 
             <div class="card card-outline card-success">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
                     <b>{% translate "Breakdown by CWE Categories" %}</b>
                   </h3>
                   <div class="card-tools">
@@ -354,54 +375,24 @@
 
                 </div>
                 <div class="card-body">
-                
+
                   <center>
-                    <div id="CWEPieChartEcharts" style="width:100%; min-width: 100%; height:400px;"></div>
+                    <div id="CWEPieChartEcharts" style="width:100%; height:450px;"></div>
                   </center>
 
                 </div>
               </div>
 
         </div>
-
-
-        <div class="col-md-4">
-
-            <div class="card card-outline card-success">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Vulnerabilities by status" %}</b>
-                  </h3>
-                  <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                  </div>
-
-                </div>
-
-                <div class="card-body">
-                    <div id="StatusPieDoughnutEcharts" style="width:100%; height:400px;"></div>
-                </div>
-
-              </div>
-
-        </div>
-
-
-
-
-      </div> 
+      </div>
 
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
 
             <div class="card card-outline card-success">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Breakdown by OWASP Top Ten Application Security Risks" %}</b>
+                    <b>{% translate "Breakdown by OWASP Categories" %}</b>
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -413,44 +404,16 @@
                 <div class="card-body">
 
                   <center>
-                    <div id="OWASPPieChartEcharts" style="width:100%; height:400px;"></div>
+                    <div id="OWASPPieChartEcharts" style="width:100%; height:450px;"></div>
                   </center>
 
                 </div>
               </div>
 
         </div>
-
-
-        <div class="col-md-4">
-
-            <div class="card card-outline card-success">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <b>{% translate "Vulnerabilities by severity" %}</b>
-                  </h3>
-                  <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                  </div>
-
-                </div>
-
-                <div class="card-body">
-                    <div id="VulnPieDoughnutEcharts" style="width:100%; height:400px;"></div>
-                </div>
-
-              </div>
-
-        </div>
-
-
       </div>
 
       <!-- ---------------------------------------- -->
-
 
       {% if DB_report_query.scope %}
       <div class="row">
@@ -479,7 +442,6 @@
       </div>
       {% endif %}
 
-
       {% if DB_report_query.outofscope %}
       <div class="row">
         <div class="col-md-12">
@@ -506,7 +468,6 @@
         </div>
       </div>
       {% endif %}
-
 
       {% if DB_report_query.methodology %}
       <div class="row">
@@ -535,8 +496,6 @@
       </div>
       {% endif %}
 
-
-
       {% if DB_report_query.recommendation %}
       <div class="row">
         <div class="col-md-12">
@@ -564,16 +523,14 @@
       {% endif %}
 
 
-
-
-
+      {% if report_tags %}
       <div class="row">
         <div class="col-md-12">
 
-            <div class="card card-outline card-danger">
+            <div class="card card-outline card-success">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <b>{{ count_finding_query }} {% translate "Finding" %}{{ count_finding_query|pluralize:"s" }}</b>
+                    <b>{% translate "Tags" %}</b>
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -583,27 +540,57 @@
 
                 </div>
                 <div class="card-body">
-                    
-                     <div class="row">
+
+                  {{ report_tags | safe_markdown | bleach}}
+
+                </div>
+              </div>
+
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="row">
+        <div class="col-md-12">
+
+            <div class="card card-outline card-danger">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <b><a href="#Findings">{{ count_finding_query }} {% translate "Finding" %}{{ count_finding_query|pluralize:"s" }}<a></b>
+                  </h3>
+                  <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+
+                </div>
+                <div class="card-body">
+
+                    <div class="row">
                       <div class="col-md-12">
 
                       {% if count_finding_query == 0 %}
 
-                        <a href="/finding/add/{{ DB_report_query.pk }}"><button type="button" class="btn btn-success btn-xm" data-toggle="modal">{% translate "Add Findings" %}</button></a>
+                        <a href="{% url 'finding_add' DB_report_query.pk %}"><button type="button" class="btn btn-success btn-xm" data-toggle="modal">{% translate "Add Findings" %}</button></a>
 
                       {% else %}
 
-                        <table id="findinglist" class="table table-bordered table-hover"> 
+                        <table id="findinglist" class="table table-bordered table-hover">
 
                         <thead>
                           <tr>
+                            <th style="width: 0%">{% translate "Order" %}</th>
                             <th style="width: 40%">{% translate "Title" %}</th>
                             <th style="width: 5%">{% translate "Status" %}</th>
                             <th style="width: 5%">{% translate "Severity" %}</th>
-                            <th style="width: 10%">{% translate "CVSS Score" %}</th>
+                            <th style="width: 5%">{% translate "CVSS Score" %}</th>
                             <th style="width: 5%">{% translate "CWE" %}</th>
                             <th style="width: 5%">{% translate "OWASP" %}</th>
                             <th style="width: 30%"class="text-center">{% translate "Actions" %}</th>
+                            <th>ID</th>
+                            <th>Display ID</th>
+                            <th>PK</th>
                           </tr>
                         </thead>
 
@@ -611,13 +598,15 @@
                           {% for finding in DB_finding_query %}
                           <tr>
                                   <td>
-                                      {{ finding.title | safe_markdown | bleach}}
+                                    {{ finding.order }}
+                                  </td>
+                                  <td>
+                                    {{ finding.title | safe_markdown | bleach}}
                                   </td>
                                   <td>
                                     {{ finding.status | safe_markdown | bleach}}
                                   </td>
                                   <td>
-                                                                      
                                         {% if finding.severity == "Critical" %}
                                             <b><font color="#CC0000">{{ finding.severity }}</font></b>
                                         {% elif finding.severity == "High" %}
@@ -631,81 +620,52 @@
                                         {% else %}
                                             <b>{{ finding.severity }}</b> ({% translate "will not appear in the report" %})
                                         {% endif %}
-
                                   </td>
                                   <td>
                                       {{ finding.cvss_score }}
                                   </td>
                                   <td>
+                                    {% if finding.cwe.cwe_id == -1 %}
+                                      -
+                                    {% else %}
                                       <a href="https://cwe.mitre.org/data/definitions/{{finding.cwe.cwe_id}}.html">{{ finding.cwe.cwe_id }}</a>
+                                    {% endif %}
                                   </td>
                                   <td>
+                                    {% if finding.owasp.owasp_id == -1 %}
+                                      -
+                                    {% else %}
                                       <a href="{{ finding.owasp.owasp_url }}">{{ finding.owasp.owasp_full_id }}</a>
+                                    {% endif %}
                                   </td>
                                   <td align="center">
                                       <a href="{% url 'finding_view' finding.pk %}"><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".bs-example-modal-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
 
                                       {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                                        <a href="{% url 'finding_edit' finding.pk %}"><button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-example-modal-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
-                                        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target=".mm-modal-clone-{{finding.pk}}"><i class="fas fa-copy"></i> {% translate "Clone" %} </button> 
-                                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-{{finding.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                                        <a href="{% url 'finding_edit' finding.pk %}#{{ finding.get_cvss_score_anchor }}"><button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-example-modal-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                                        <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{finding.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-Finding"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                                        <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{finding.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Finding"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                                       {% endif %}
-
                                   </td>
-
+                                  <td>
+                                    {{ finding.finding_id }}
+                                  </td>
+                                  <td>
+                                    {{ finding.display_id }}
+                                  </td>
+                                  <td>
+                                    {{ finding.pk }}
+                                  </td>
                           </tr>
-
-                          <div class="modal modal-danger fade mm-modal-{{finding.pk}}" id="modal-danger">
-                            <div class="modal-dialog">
-                              <div class="modal-content bg-danger">
-                                <div class="modal-header">
-                                  <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
-                                <div class="modal-body">
-                                  <p>{% translate "Delete Finding" %}&hellip;</p>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                  <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                  <button type="button" onclick="DeleteID({{finding.pk}});" class="btn btn-outline-light">{% translate "Delete Finding" %}</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-
-                          <div class="modal modal-warning fade mm-modal-clone-{{finding.pk}}" id="modal-warning">
-                            <div class="modal-dialog">
-                              <div class="modal-content bg-warning">
-                                <div class="modal-header">
-                                  <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
-                                <div class="modal-body">
-                                  <p>{% translate "Clone Finding" %}&hellip;</p>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                  <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                  <button type="button" onclick="CloneFinding({{finding.pk}});" class="btn btn-outline-light">{% translate "Clone Finding" %}</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-
-
                           {% endfor %}
 
                         </tbody>
                       </table>
-
+                     {% include "home/template_delete_item.html" with item="Finding" %}
+                     {% include "home/template_duplicate_item_to_report.html" with item="Finding" %}
 
                       {% endif %}
-         
+
                       </div>
 
                     </div>
@@ -714,9 +674,7 @@
               </div>
 
         </div>
-      </div> 
-
-
+      </div>
 
       <div class="row">
         <div class="col-md-12">
@@ -724,7 +682,7 @@
             <div class="card card-outline card-danger">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <b>{{ DB_appendix_query.count }} {% translate "Appendix" %}</b>
+                    <b><a href="#Appendix">{{ DB_appendix_query.count }} {% translate "Appendix" %}</a></b>
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -735,23 +693,23 @@
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
-                    
-                
+
+
                   <div class="row">
                     <div class="col-md-12">
 
                       {% if count_appendix_query == 0 %}
 
-                        <a href="/appendix/add/{{ DB_report_query.pk }}"><button type="button" class="btn btn-success btn-xm">{% translate "Add Appendix" %}</button></a>
+                        <a href="{% url 'appendix_add' DB_report_query.pk %}"><button type="button" class="btn btn-success btn-xm">{% translate "Add Appendix" %}</button></a>
 
                       {% else %}
 
-                      <table id="appendixlist" class="table table-bordered table-hover"> 
+                      <table id="appendixlist" class="table table-bordered table-hover">
 
                         <thead>
                           <tr>
                             <th style="width: 35%">{% translate "Title" %}</th>
-                            <th style="width: 40%">{% translate "Finding" %}</th>
+                            <th style="width: 40%">{% translate "Findings" %}</th>
                             <th style="width: 25%"class="text-center">{% translate "Actions" %}</th>
                           </tr>
                         </thead>
@@ -765,52 +723,31 @@
                                 {{appendix.title| safe_markdown | bleach}}
                             </td>
 
+
                             <td>
-                                {% for finding in appendix.finding.all %}
+                                {% for finding in appendix.findings.all %}
                                   {{finding.title| safe_markdown | bleach}}
                                 {% endfor %}
                             </td>
                             <td align="center">
-                                <a href="/appendix/view/{{ appendix.pk }}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
+                                <a href="{% url 'appendix_view' appendix.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
 
                                 {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                                  <a href="/appendix/edit/{{ appendix.pk }}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a> 
-                                  <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-appendix-modal-{{appendix.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                                  <a href="{% url 'appendix_edit' appendix.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                                  <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{appendix.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-Appendix"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                                  <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{appendix.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Appendix"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                                 {% endif %}
-                                
                             </td>
-
                           </tr>
-
-                          <div class="modal modal-danger fade mm-appendix-modal-{{appendix.pk}}" id="modal-danger">
-                            <div class="modal-dialog">
-                              <div class="modal-content bg-danger">
-                                <div class="modal-header">
-                                  <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
-                                <div class="modal-body">
-                                  <p>{% translate "Delete appendix" %}&hellip;</p>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                  <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                  <button type="button" onclick="DeleteID_A({{appendix.pk}});" class="btn btn-outline-light">{% translate "Delete Appendix" %}</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-
                           {% endfor %}
-
                         </tbody>
-                      </table>
+                     </table>
+                     {% include "home/template_delete_item.html" with item="Appendix" %}
+                     {% include "home/template_duplicate_item_to_report.html" with item="Appendix" %}
 
                     {% endif %}
 
-       
+
                     </div>
 
                   </div>
@@ -822,17 +759,13 @@
       </div>
 
 
-
-
-
-
       <div class="row">
         <div class="col-md-12">
 
             <div class="card card-outline card-danger">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <b>{{ DB_attackflow_query.count }} {% translate "Attack Flows" %}</b>
+                    <b><a href="#AttackFlows">{{ DB_attackflow_query.count }} {% translate "Attack Flows" %}</a></b>
                   </h3>
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -843,23 +776,24 @@
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
-                    
-                
+
+
                   <div class="row">
                     <div class="col-md-12">
 
                       {% if count_attackflow_query == 0 %}
 
-                        <a href="/attackflow/add/{{ DB_report_query.pk }}"><button type="button" class="btn btn-success btn-xm">{% translate "Add Attack Flow" %}</button></a>
+                        <a href="{% url 'attackflow_add' DB_report_query.pk %}"><button type="button" class="btn btn-success btn-xm">{% translate "Add Attack Flow" %}</button></a>
 
                       {% else %}
 
-                      <table id="attackt" class="table table-bordered table-hover"> 
+                      <table id="attacklist" class="table table-bordered table-hover">
 
                         <thead>
                           <tr>
-                            <th style="width: 35%">{% translate "Title" %}</th>
-                            <th style="width: 40%">{% translate "Finding" %}</th>
+                            <th style="width: 20%">{% translate "Title" %}</th>
+                            <th style="width: 15%">{% translate "Attack Flow Schema" %}</th>
+                            <th style="width: 40%">{% translate "Findings" %}</th>
                             <th style="width: 25%" class="text-center">{% translate "Actions" %}</th>
                           </tr>
                         </thead>
@@ -873,53 +807,42 @@
                                 {{attackflow.title| safe_markdown | bleach}}
                             </td>
 
+                             <td>
+                                <a href="{% url 'attackflow_afb_edit' attackflow.pk %}?redirect=report_view&target_pk={{attackflow.report.pk}}">
+                                
+                                {% if attackflow.attackflow_image|length > 10 %}
+                                <img src="{{attackflow.attackflow_image}}" alt="Attack Flow Screenshot" style="max-height:50px;max-width:50px;height:auto;width:auto;" />
+                                {% else %}
+                                No Schema
+                                {% endif %}
+                                </a>
+                            </td>
+
 
                             <td>
-                                {% for finding in attackflow.finding.all %}
+                                {% for finding in attackflow.findings.all %}
                                   {{finding.title| safe_markdown | bleach}}
                                 {% endfor %}
                             </td>
 
                             <td align="center">
-                                {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                                  <a href="/attackflow/edit/{{ attackflow.pk }}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a> 
-                                  <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-attackflow-modal-{{attackflow.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
-                                {% endif %}
-                                
+                              <a href="{% url 'attackflow_view' attackflow.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
+
+                               {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                                  <a href="{% url 'attackflow_edit' attackflow.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                                  <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{attackflow.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-AttackFlow"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                                  <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{attackflow.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-AttackFlow"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                                {% endif %} 
                             </td>
-
                           </tr>
-
-                          <div class="modal modal-danger fade mm-attackflow-modal-{{attackflow.pk}}" id="modal-danger">
-                            <div class="modal-dialog">
-                              <div class="modal-content bg-danger">
-                                <div class="modal-header">
-                                  <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
-                                <div class="modal-body">
-                                  <p>{% translate "Delete Attack Flow" %}&hellip;</p>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                  <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                  <button type="button" onclick="DeleteID_AT({{attackflow.pk}});" class="btn btn-outline-light">{% translate "Delete Attack Flow" %}</button>
-
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-
                           {% endfor %}
-
                         </tbody>
-                      </table>
-
+                     </table>
+                     {% include "home/template_delete_item.html" with item="AttackFlow" %}
+                     {% include "home/template_duplicate_item_to_report.html" with item="AttackFlow" %}
                     {% endif %}
 
-       
+
                     </div>
 
                   </div>
@@ -930,18 +853,44 @@
         </div>
       </div>
 
-
-
-
-<div class="row">
+      <div class="row">
         <div class="col-md-12">
 
             <div class="card card-outline card-info">
                 <div class="card-header">
                   <h3 class="card-title">
-                    <b>{{ DB_deliverable_query.count }} {% translate "Reports generated - Deliverables" %} </b>
+                    <b><a href="#Deliverables">{{ DB_deliverable_query.count }} Deliverable{{ DB_deliverable_query.count|pluralize:"s" }}</a></b>
+                    &nbsp; | &nbsp;
+                    <td class="text-center">
+                      {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                        <button type="button" class="btn btn-info btn-x" data-toggle="modal" data-target=".mm-modal-add-deliverable"><i class="fas fa-add"></i> {% translate "Add Custom Deliverables" %} </button>
+                      {% endif %}
+                    </td>
+                    &nbsp; | &nbsp;
+                    Share Connection: {{DB_report_query.share_deliverable|default_if_none:"Not configured"}}
                   </h3>
-
+                  <div class="modal modal-info fade mm-modal-add-deliverable" id="modal-info">
+                    <div class="modal-dialog">
+                      <div class="modal-content bg-info">
+                        <div class="modal-header">
+                          <h4 class="modal-title">{% translate "Add Custom Deliverables" %}</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form name="formACD" id="formACD">
+                        <div class="modal-body">
+                          <p>{% translate "Choose Custom Deliverables" %}&hellip;</p>
+                          <input type="file" multiple="multiple" placeholder="Custom Deliverables" name="custom_deliverables" />
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                          <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Cancel" %}</button>
+                          <button type="button" onclick="AddCustomDeliverable();" class="btn btn-outline-light">{% translate "Send Deliverable" %}</button>
+                        </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
 
                   <div class="card-tools">
                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -953,7 +902,6 @@
                 <!-- /.card-header -->
                 <div class="card-body">
 
-
                   <div class="row">
                     <div class="col-md-12">
 
@@ -961,74 +909,81 @@
 
                         <thead>
                           <tr>
-                            <th style="width: 20%" class="text-center">{% translate "Date" %}</th>
-                            <th style="width: 50%" class="text-center">{% translate "File" %}</th>
-                            <th style="width: 10%" class="text-center">{% translate "Type" %}</th>
-                            <th style="width: 20%" class="text-center">{% translate "Actions" %}</th>
+                            <th style="width: 10%">{% translate "Date" %}</th>
+                            <th style="width: 40%">{% translate "File" %}</th>
+                            <th style="width: 10%">{% translate "Type" %}</th>
+                            <th style="width: 25%">{% translate "Share Date &amp; UUID" %}</th>
+                            <th style="width: 15%"class="text-center">{% translate "Actions" %}</th>
                           </tr>
                         </thead>
-
 
                         <tbody>
                           {% for deliverable in DB_deliverable_query %}
                           <tr>
-                            <td>{{ deliverable.generation_date|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ deliverable.generation_date|date:"Y-m-d" }}</td>
                             <td><a href="{% url 'deliverable_download' deliverable.pk %}">{{ deliverable.filename }}</a></td>
                             <td>{{ deliverable.filetype }}/{{ deliverable.filetemplate }}</td>
+                            <td>
+                              {% if deliverable.share_date is not None %}
+                                {{ deliverable.share_date | date:"Y-m-d H:i:s" }}<br/>
+
+                                {% if deliverable.share_uuid|startswith:'https://' %}
+                                  <a href="{{deliverable.share_uuid}}">Link to Remote Document</a>
+                                {% else %}
+                                  {{ deliverable.share_uuid }}
+                                {% endif %}
+                                
+                              {% endif %}
+                            </td>
                             <td class="text-center">
                               {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                                <a href="{% url 'deliverable_download' deliverable.pk %}"><button type="button" class="btn btn-warning btn-sm"><i class="fa fa-download"></i> {% translate "Download" %}</button></a>
-
-                                <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-del-deliverable-{{deliverable.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %} </button>
+                                <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{deliverable.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Deliverable"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                              {% endif %}
+                              {% if DB_report_query.share_deliverable %}
+                              <button type="button" class="btn btn-dark btn-sm modal-item-action" id="{{deliverable.pk}}" data-toggle="modal" data-target=".modal-item-action-share-Deliverable"><i class="fas fa-trash"></i> {% translate "Share" %}</button>
                               {% endif %}
                             </td>
                           </tr>
-
-                          <div class="modal modal-danger fade mm-modal-del-deliverable-{{deliverable.pk}}" id="modal-danger">
-                            <div class="modal-dialog">
-                              <div class="modal-content bg-danger">
-                                <div class="modal-header">
-                                  <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
-                                <div class="modal-body">
-                                  <p>{% translate "Delete Deliverable" %}&hellip;</p>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                  <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                                  <button type="button" onclick="DeleteID_D({{deliverable.pk}});" class="btn btn-outline-light">{% translate "Delete Deliverable" %}</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-
                           {% endfor %}
-
                         </tbody>
                       </table>
+                     {% include "home/template_delete_item.html" with item="Deliverable" %}
+                     {% include "home/template_share_item.html" with item="Deliverable" %}
                     </div>
-
                   </div>
-
+                </div>
+              </div>
+              <div class="modal modal-danger fade mm-sharereport-modal" id="pleaseWaitDialogShareReport" data-backdrop="static" data-keyboard="false" role="dialog">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Please wait, the deliverable is being sharing...</h4>
+                    </div>
+                    <div class="modal-body" style="width: 300px; height: 360px">
+                      <img id="waitShareImage" class="center" style="display: block; max-width:280px; max-height:340px; width: auto; height: auto;"" src="" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              <div class="modal modal-warning fade mm-sharereport-modal" id="errorDialogShareReport" data-backdrop="static" data-keyboard="false role="dialog">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{% translate "Sharing Deliverable Error" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                      <p>Error on {% translate "Share Deliverable" %} with {{DB_report_query.share_deliverable|default_if_none:"Not configured"}}</p>
+                      <p id="responseErrorMessageShare"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
         </div>
       </div>
 
-
-
-
-
       </div>
     </section>
-
-
-
-
 
 {% endblock content %}
 
@@ -1054,29 +1009,166 @@
     );
 </script>
 
-
 <script>
   $(function () {
-    $("#findinglist").DataTable({
-      "order": [[3, 'desc']],
+    const createdCell = function(cell) {
+      let original;
+      cell.setAttribute('contenteditable', true)
+      cell.setAttribute('spellcheck', false)
+      cell.addEventListener("focus", function(e) {
+        original = e.target.textContent
+        console.log('Original: ', original)
+      })
+      cell.addEventListener("blur", function(e) {
+        if (original !== e.target.textContent) {
+          const row = $('#findinglist').DataTable().row(e.target.parentElement)
+          const cell = $('#findinglist').DataTable().cell(this)
+          cell.invalidate().draw()
+          var url_finding_order = "{% url 'finding_order' '0' %}".replace('0', row.data()[9])
+          $.ajax({
+            url:  url_finding_order,
+            headers:{ "X-CSRFToken": '{{ csrf_token }}' },
+            type: 'POST',
+            data: cell.data(),
+            success: function() {
+              //console.log('Row changed: ', row.data())
+            },
+            error: function() {
+              cell.data(original).invalidate().draw()
+              //console.log('Row not changed: ', row.data())
+            }
+          })
+        }
+      })
+    };
+
+    $('#findinglist thead tr')
+    .clone(true)
+    .addClass('ffilters')
+    .appendTo('#findinglist thead');
+    findinglistTable = $("#findinglist").DataTable({
+      columnDefs: [
+        { visible: false, targets: [0, 8, 9, 10] },
+        { createdCell: createdCell, targets: [0] }
+      ],
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
-      "autoWidth": false,
-      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+      "responsive": true,
+      "lengthChange": false,
+      "autoWidth": true,
+      "orderCellsTop": false,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.ffilters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if (title != "{% translate 'Order' %}" && title != "{% translate 'Actions' %}" && title != "") {
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.ffilters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+    },
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
     }).buttons().container().appendTo('#findinglist_wrapper .col-md-6:eq(0)');
   });
 </script>
 
 <script>
   $(function () {
+    $('#appendixlist thead tr')
+    .clone(true)
+    .addClass('afilters')
+    .appendTo('#appendixlist thead');
     $("#appendixlist").DataTable({
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
+      "responsive": true,
+      "lengthChange": false,
       "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.afilters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if (title != "{% translate 'Actions' %}") {
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.afilters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#appendixlist_wrapper .col-md-6:eq(0)');
   });
@@ -1084,32 +1176,133 @@
 
 <script>
   $(function () {
-    $("#attackt").DataTable({
+    $('#attacklist thead tr')
+    .clone(true)
+    .addClass('atfilters')
+    .appendTo('#attacklist thead');
+    $("#attacklist").DataTable({
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
+      "responsive": true,
+      "lengthChange": false,
       "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.atfilters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.atfilters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-    }).buttons().container().appendTo('#attackt_wrapper .col-md-6:eq(0)');
+    }).buttons().container().appendTo('#attacklist_wrapper .col-md-6:eq(0)');
   });
 </script>
-
 
 <script>
   $(function () {
+    $('#deliverablelist thead tr')
+    .clone(true)
+    .addClass('dfilters')
+    .appendTo('#deliverablelist thead');
     $("#deliverablelist").DataTable({
-      "order": [[1, 'desc']],
       "paging": true,
       "searching": true,
-      "responsive": true, 
-      "lengthChange": false, 
+      "responsive": true,
+      "lengthChange": false,
       "autoWidth": false,
-      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.dfilters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.dfilters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
     }).buttons().container().appendTo('#deliverablelist_wrapper .col-md-6:eq(0)');
   });
 </script>
-
 
 <script type="text/javascript">
         var chartSeveritybar = echarts.init(document.getElementById('SeveritybarChartEcharts'));
@@ -1138,33 +1331,33 @@
                   textStyle: {
                     fontSize:15
                   }
-                 },{
+                },{
                   value: "High",
                   textStyle: {
                     fontSize:15
                   }
-                 }, {
+                }, {
                   value: "Medium",
                   textStyle: {
                     fontSize:15
                   }
-                 } , {
+                } , {
                   value: "Low",
                   textStyle: {
                     fontSize:15
                   }
-                 }, {
+                }, {
                   value: "Info",
                   textStyle: {
                     fontSize:15
                   }
-                 }]
+                }]
             },
             yAxis: {
               type: 'value',
               interval: 1,
               axisLabel:{
-               fontSize: 12
+                fontSize: 12
               }
             },
 
@@ -1208,13 +1401,10 @@
 
 </script>
 
-
-
-
 <script type="text/javascript">
     var chart_CWE = echarts.init(document.getElementById('CWEPieChartEcharts'));
 
-    var option = {
+    var option_CWE = {
             tooltip: {
                 trigger: 'item',
                 formatter: '{b} <br>{c}'
@@ -1225,7 +1415,7 @@
                   saveAsImage: {
                     show: true,
                     title: "Save Image",
-                    name: "Breakdown_by_Categories"
+                    name: "Breakdown_by_CWE_Categories"
                   }
               }
             },
@@ -1251,11 +1441,9 @@
             ]
     };
 
-    chart_CWE.setOption(option);
+    chart_CWE.setOption(option_CWE);
 
 </script>
-
-
 
 <script type="text/javascript">
   var chart_OWASP = echarts.init(document.getElementById('OWASPPieChartEcharts'));
@@ -1301,14 +1489,30 @@
 
 </script>
 
-
-
-
-
 <script>
+  $(function() {
+    $('#exportButton').hide();
 
-  function SaveSummaryImage(doc_type, template) {
+    $('#exportSelect').on('change', function() {
+        if ($('#exportSelect').find(':selected').attr('id') == 'chooseOptionSelect') {
+          $('#exportButton').hide();
+        } else {
+          $('#exportButton').show();
+        }
+    });
 
+    $('#exportButton').on('click', function() {
+      var cst = $('#exportSelect').find(':selected').val();
+      if (cst == 'CSV') {
+        document.location.href = "{% url 'findings_download_csv' DB_report_query.pk %}";
+      } else {
+        var export_type = $('#exportSelect').find(':selected').attr('export-type');
+        SaveReport(export_type, cst);
+      }
+    });
+  });
+
+  function SaveReport(export_type, cst) {
         var imgSeveritybar = new Image();
         imgSeveritybar.src = chartSeveritybar.getDataURL({
             pixelRatio: 2,
@@ -1327,222 +1531,233 @@
             backgroundColor: '#fff'
         });
 
+        var waitNumber = 1 + Math.floor(Math.random() * 52);
+
         $.ajax({
             type: 'POST',
-            url: "/en/report/uploadsummaryfindings/" + {{ DB_report_query.pk }}, // prepend a language code or even better: use window.location.href
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
+            cache:false,
+            url: "{% url 'report_download' 'XXEXPORTTYPEXX' 'XXCSTXX' DB_report_query.pk %}".replace('XXEXPORTTYPEXX', export_type).replace('XXCSTXX', cst),
+            headers:{ "X-CSRFToken": '{{ csrf_token }}' },
             data : { 'fileSeveritybar': imgSeveritybar.src, 'file_cwe': imgCWE.src, 'file_owasp': imgOWASP.src },
-
-            success : function(json) {
-                //console.log("requested complete");
-                if (json.status == 'success'){
-                  if (doc_type == 'PDF'){
-                    document.location.href = "/report/download/pdf/"+template+"/{{ DB_report_query.pk }}";
-                    //window.open('/report/download/pdf/{{ DB_report_query.pk }}', '_blank');
-                  }
-                  else if (doc_type == 'Markdown'){
-                    document.location.href = "/report/download/markdown/"+template+"/{{ DB_report_query.pk }}";
-                    //window.open('/report/download/markdown/{{ DB_report_query.pk }}', '_blank');
-                  }
-
-                }
-            }
-        })
-
-  }
-
-</script>
-
-
-<script type="text/javascript">
-    var chart_Vuln = echarts.init(document.getElementById('VulnPieDoughnutEcharts'));
-
-    var option = {
-          tooltip: {
-            trigger: 'item'
-          },
-          legend: {
-            top: '5%',
-            left: 'center'
-          },
-          series: [
-            {
-              name: '{% translate "Vulnerabilities" %}',
-              type: 'pie',
-              radius: ['40%', '70%'],
-              avoidLabelOverlap: false,
-              itemStyle: {
-                borderRadius: 10,
-                borderColor: '#fff',
-                borderWidth: 2
-              },
-              label: {
-                show: false,
-                position: 'center'
-              },
-              emphasis: {
-                label: {
-                  show: false,
-                  fontSize: 40,
-                  fontWeight: 'bold'
-                }
-              },
-              labelLine: {
-                show: false
-              },
-              data: [
-                { value: {{count_findings_critical}}, name: '{% translate "Critical" %}', itemStyle: {color: '#cc0000'} },
-                { value: {{count_findings_high}}, name: '{% translate "High" %}', itemStyle: {color: '#ff403d'}  },
-                { value: {{count_findings_medium}}, name: '{% translate "Medium" %}', itemStyle: {color: '#fc7f03'}  },
-                { value: {{count_findings_low}}, name: '{% translate "Low" %}', itemStyle: {color: '#05b04f'}  },
-                { value: {{count_findings_info}}, name: '{% translate "Info" %}', itemStyle: {color: '#45a7f7'}  }              ]
-            }
-          ]
-        };
-
-    chart_Vuln.setOption(option);
-
-</script>
-
-<script type="text/javascript">
-    var chart_status = echarts.init(document.getElementById('StatusPieDoughnutEcharts'));
-
-    var option = {
-          tooltip: {
-            trigger: 'item'
-          },
-          legend: {
-            top: '5%',
-            left: 'center'
-          },
-          series: [
-            {
-              name: '{% translate "Status" %}',
-              type: 'pie',
-              radius: ['40%', '70%'],
-              avoidLabelOverlap: false,
-              itemStyle: {
-                borderRadius: 10,
-                borderColor: '#fff',
-                borderWidth: 2
-              },
-              label: {
-                show: false,
-                position: 'center'
-              },
-              emphasis: {
-                label: {
-                  show: false,
-                  fontSize: 40,
-                  fontWeight: 'bold'
-                }
-              },
-              labelLine: {
-                show: false
-              },
-              data: [
-                { value: {{count_open_findings}}, name: '{% translate "Open" %}', itemStyle: {color: 'blue'} },
-                { value: {{count_closed_findings}}, name: '{% translate "Closed" %}', itemStyle: {color: 'green'} }              ]
-            }
-          ]
-        };
-
-    chart_status.setOption(option);
-
-</script>
-
-<script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'finding_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
+            beforeSend: function () {
+              $("#pleaseWaitDialogSaveReport").modal("show");
+              var waitImage = $("#waitSaveImage").get()[0];
+              waitImage.src = "/media/images/wait_" + waitNumber + ".webp" ;
             },
-            data : { 'delete_id': del_id},
-
-            success : function(json) {
-              document.location.href = "/report/findings/{{DB_report_query.pk}}"; 
-            }
-        })
-  }
-</script>
-
-<script>
-  function DeleteID_A(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'appendix_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
-
-            success : function(json) {
-              document.location.href = "{% url 'report_view' DB_report_query.pk %}";
+            success: function(json) {
+              //console.log("Report builded");
+              document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Deliverables";
               document.location.reload(true);
-            }
-        })
-  }
-</script>
-
-
-<script>
-function DeleteID_D(del_id) {
-  $.ajax({
-      type: 'POST',
-      url: "{% url 'deliverable_delete' %}",
-      headers:{
-        "X-CSRFToken": '{{ csrf_token }}'
-      },
-      data : { 'delete_id': del_id},
-
-      success : function(json) {
-        document.location.href = "{% url 'report_view' DB_report_query.pk %}";
-        document.location.reload(true);
-      }
-  });
-}
-</script>
-
-
-<script>
-  function DeleteID_AT(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'attackflow_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
             },
-            data : { 'delete_id': del_id},
+            error : function(json) {
+              $("#pleaseWaitDialogSaveReport").modal("hide");
+              $("#errorDialogSaveReport").modal("show");
+              $("#responseErrorMessageSave").html(json.responseText);
+            },
+        });
+  };
 
-            success : function(json) {
-              document.location.href = "{% url 'report_view' DB_report_query.pk %}"
-            }
-        })
-  }
-</script>
+  $(document).ready(function() {
+    $("#select2ReportToClone").select2();
+  });
 
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
 
-<script>
-function CloneFinding(finding_id) {
-  $.ajax({
+  
+  function Delete_Finding() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'finding_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Findings";
+          document.location.reload(true);
+        }
+    });
+  };
+  function Duplicate_Finding() {
+    var itemId = $(".item-id #itemID").val();
+    var report_to_clone = $("#id_report_to_clone").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'finding_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'report_to_clone': report_to_clone, 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Findings";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Duplicate_Appendix() {
+    var itemId = $(".item-id #itemID").val();
+    var report_to_clone = $("#id_report_to_clone").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'appendix_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'report_to_clone': report_to_clone, 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Appendix";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Duplicate_AttackFlow() {
+    var itemId = $(".item-id #itemID").val();
+    var report_to_clone = $("#id_report_to_clone").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'attackflow_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'report_to_clone': report_to_clone, 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#AttackFlows";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Delete_Appendix() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'appendix_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Appendix";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Delete_AttackFlow() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'attackflow_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#AttackFlows";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Delete_Deliverable() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'deliverable_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Deliverables";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function AddCustomDeliverable() {
+    var form_data = new FormData($('#formACD')[0]);
+    $.ajax({
+        type: 'POST',
+        async: false,
+        cache: false,
+        contentType: false,
+        processData: false,
+        url: "{% url 'deliverable_report_add' DB_report_query.pk %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data: form_data,
+
+        success : function(json) {
+          document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Deliverables";
+          document.location.reload(true);
+        }
+    });
+  };
+
+  function Share_Deliverable() {
+    var waitNumber = 1 + Math.floor(Math.random() * 52);
+     var itemId = $(".item-id #itemID").val();
+    $.ajax({
       type: 'POST',
-      url: "{% url 'finding_duplicate' %}",
+      url: "{% url 'share_deliverable' %}",
       headers:{
         "X-CSRFToken": '{{ csrf_token }}'
       },
-      data : { 'duplicate_id': finding_id},
-
+      data : {'report_pk': {{DB_report_query.pk}},
+              'deliverable_pk': itemId},
       success : function(json) {
-        document.location.href = "{% url 'report_view' DB_report_query.pk %}";
+        $("#pleaseWaitDialogShareReport").modal("hide");
+        $("#confirmDialogShareReport .close").click();
+        document.location.href = "{% url 'report_view' DB_report_query.pk %}" + "#Deliverables";
         document.location.reload(true);
+      },
+      error : function(json) {
+        $("#pleaseWaitDialogShareReport").modal("hide");
+        $("#errorDialogShareReport").modal("show");
+        var jsonResponseText = $.parseJSON(json.responseText);
+        $("#responseErrorMessageShare").text(jsonResponseText.error);
+      },
+      beforeSend: function () {
+        $("#confirmDialogShareReport .close").click();
+        $("#pleaseWaitDialogShareReport").modal("show");
+        var waitImage = $("#waitShareImage").get()[0];
+        waitImage.src = "/media/images/wait_" + waitNumber + ".webp" ;
       }
-  });
-}
-</script>
+    });
+  };
 
+  function BookmarkToogle() {
+    $.ajax({
+        type: 'GET',
+        url: "{% url 'bookmark_toggle' 'report' DB_report_query.pk %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        success : function(json) {
+          if (json.status == "created") {
+             $("#bookmark").css("color","blue");
+          }
+          if (json.status == "deleted") {
+             $("#bookmark").css("color","");
+          }
+        }
+    });
+  };
+</script>
 
 {% endblock javascripts %}

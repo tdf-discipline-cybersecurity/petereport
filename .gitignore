@@ -3,12 +3,13 @@
 *.bak
 TODO
 .DS_Store
-
+*.kate-swp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+.jython_cache
 
 # C extensions
 *.so
@@ -32,6 +33,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.jython_cache
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -57,12 +59,16 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Translations
+*.mo
+*.pot
 
 # Django stuff:
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+app/media/*
 
 # Flask stuff:
 instance/
@@ -79,6 +85,9 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# VS Code
+/.vscode
 
 # IPython
 profile_default/
@@ -131,5 +140,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Linter: Ruff
-.ruff_cache
+# Petereport Application
+/petereport.code-workspace
+/app/db/petereport.sqlite3
+/app/db/petereport.sqlite3-journal
+/app/storage_reports/*
+/app/media/uploads/*
+/backups/*
+/nginx/petereport_local.key
+/nginx/petereport_local.crt
+/snippet.py
+docker-compose-local.yml
+/deploy

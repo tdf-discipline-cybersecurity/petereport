@@ -1,0 +1,101 @@
+{% extends 'home/template.html' %}
+{% load i18n %}
+{% load bleach_tags %}
+
+{% load app_filters %}
+
+{% block title %} {% translate "Bookmarks" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>{% translate "Bookmarks" %}</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+          <li class="breadcrumb-item active">{% translate "Bookmarks" %}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="card card-outline card-primary">
+      <div class="card-body">
+        <table id="bookmarkslist" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                  <th style="width: 15%">{% translate "Type" %}</th>
+                  <th style="width: 70%">{% translate "Label" %}</th>
+                  <th style="width: 15%">{% translate "Bookmarked" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            {% for bookmark in bookmarks %}
+              <tr>
+                <td>
+                {% if bookmark.0 == "customer" %}
+                  <p class="nav-icon fas fa-building text-purple"> Customer</p>
+                {% elif bookmark.0 == "product" %}
+                  <p class="nav-icon fa fa-cube text-primary"> Product</p>
+                {% elif bookmark.0 == "report" %}
+                  <p class="nav-icon fa fa-file-invoice text-success"> Report</p>
+                {% elif bookmark.0 == "cspn_evaluation" %}
+                  <p class="nav-icon fa fa-file-contact text-success"> CSPN Evaluation</p>
+                {% elif bookmark.0 == "finding" %}
+                  <p class="nav-icon fa fa-bug text-danger"> Finding</p>
+                {% elif bookmark.0 == "finding_template" %}
+                  <p class="nav-icon fa fa-file-medical text-danger"> Finding Template</p>
+                {% else %}
+                  {{ bookmark.0 }}
+                {% endif %}
+                </td>
+                <td><a href="{{bookmark.2}}">{{ bookmark.1 }}</a></td>
+                <td><i id="bookmark_{{ bookmark.4}}" onClick="BookmarkToogle({{ bookmark.4}}, '{{ bookmark.0}}', {{ bookmark.3 }})" class="fa fa-bookmark" style="color:blue"></i></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+<script>
+    function BookmarkToogle(bookmark_pk, model, id) {
+    $.ajax({
+        type: 'GET',
+        url: "{% url 'bookmark_toggle' 'XXMODELXX' '0123456789' %}".replace('XXMODELXX', model).replace('0123456789', id),
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        success : function(json) {
+          if (json.status == "created") {
+             $("#bookmark_" + bookmark_pk).css("color","blue");
+          }
+          if (json.status == "deleted") {
+             $("#bookmark_" + bookmark_pk).css("color","");
+          }
+        }
+    });
+  };
+</script>
+{% endblock javascripts %}
+

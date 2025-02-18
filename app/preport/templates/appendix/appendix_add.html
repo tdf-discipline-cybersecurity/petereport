@@ -1,5 +1,4 @@
 {% extends 'home/template.html' %}
-
 {% load i18n %}
 {% load bleach_tags %}
 
@@ -16,7 +15,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1>{{DB_report_query.title}} {% translate "Report" %}</h1>
+        <h1>{% translate "Appendix" %}</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -31,7 +30,6 @@
 </section>
 
 
-
 <section class="content">
     <div class="container-fluid">
       <div class="row">
@@ -42,36 +40,36 @@
                 <h3 class="card-title">{% translate "Appendix" %}</h3>
               </div>
 
-              <form role="form" method="post" enctype="multipart/form-data">
+
+              <form role="form" method="post" enctype="multipart/form-data" id="form-object">
                 {% csrf_token %}
                 <div class="card-body">
 
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Finding" %}</label>
-                      <div class="col-md-10 col-sm-10 col-xs-12">
-                        {{ form.finding }}
-                      </div>
-                  </div>
-
-                  <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Appendix Title" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Title" %}</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                         {{ form.title }}
                       </div>
                   </div>
 
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Appendix Description" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Findings" %}</label>
+                      <div class="col-md-10 col-sm-10 col-xs-12">
+                        {{ form.findings }}
+                      </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Description" %}</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                         {{ form.description }}
                       </div>
                   </div>
 
-                </div>
 
                 {% if form.errors %}
-                   {% for field in form %}
-                       {% for error in field.errors %}
+                  {% for field in form %}
+                      {% for error in field.errors %}
                           <div class="container">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                               <div class="alert alert-danger alert-dismissible ">
@@ -81,17 +79,16 @@
                               </div>
                             </div>
                           </div>
-                       {% endfor %}
-                   {% endfor %}
+                      {% endfor %}
+                  {% endfor %}
                 {% endif %}
 
                 <div class="card-footer">
-                  <button type="submit" class="btn btn-danger" value="Save" name="_finish">{% translate "Save and finish" %}</button>
-                  <button type="submit" class="btn btn-primary" value="Next" name="_next">{% translate "Save and add a new appendix" %}</button>
+                  <button type="submit" class="btn btn-danger" value="Save" name="_finish">Save and finish</button>
+                  <button type="submit" class="btn btn-primary" value="Next" name="_next">Save and add a new Appendix</button>
                 </div>
               </form>
             </div>
-
 
         </div>
       </div>

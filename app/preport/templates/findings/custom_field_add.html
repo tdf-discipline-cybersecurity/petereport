@@ -42,7 +42,7 @@
               <div class="card-header">
                 <h3 class="card-title">{% translate "Custom Field" %}</h3>
               </div>
-              
+
               <form role="form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="card-body">
@@ -71,7 +71,7 @@
 
                 {% if form.errors %}
                    {% for field in form %}
-                       {% for error in field.errors %} 
+                       {% for error in field.errors %}
                           <div class="container">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                               <div class="alert alert-danger alert-dismissible ">
@@ -84,7 +84,7 @@
                        {% endfor %}
                    {% endfor %}
                 {% endif %}
-                
+
                 <div class="card-footer">
                   <button type="submit" class="btn btn-danger" value="Save" name="_finish">{% translate "Save and finish" %}</button>
                   <button type="submit" class="btn btn-primary" value="Next" name="_next">{% translate "Save and add a new custom field" %}</button>

@@ -9,16 +9,18 @@
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
       {% endblock meta %}
 
-      <title>PeTeReport | {% block title %}{% endblock %}</title>
+      <title>{{application_name}} | {% block title %}{% endblock %}</title>
 
       <link rel="shortcut icon" href="/static/favicon.ico" />
 
       {% block stylesheets %}
 
-      <!-- Attack Flow -->
-      <link rel="stylesheet" href="/static/attack_flow_builder/css/app.7723a404.css" type="text/css">
-
       {% endblock stylesheets %}
+
+      <!-- Attack Flow -->
+      {% include "home/template_attack_flow_header.html" %}
+
+
 
     {% endblock head %}
     {% load static %}
@@ -35,8 +37,8 @@
 
 {% block javascripts %}
 
-<script src="/static/attack_flow_builder/js/chunk-vendors.5ccdb256.js"></script>
-<script src="/static/attack_flow_builder/js/app.6cd66b76.js"></script>
+<!-- Attack Flow -->
+{% include "home/template_attack_flow_body.html" %}
 
 {% endblock javascripts%}
 

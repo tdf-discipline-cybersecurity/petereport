@@ -6,10 +6,7 @@
 
 {% block stylesheets %}
   {{ block.super }}
-
-  <link rel="stylesheet" href="/static/plugins/daterangepicker/daterangepicker.css" />
-  <link rel="stylesheet" href="/static/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
-
+  <link rel="stylesheet" href="/static/plugins/jquery-ui/jquery-ui.theme.css" />
 {% endblock stylesheets %}
 
 {% block content %}
@@ -25,7 +22,11 @@
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
           <li class="breadcrumb-item"><a href="{% url 'report_list' %}">{% translate "Reports" %}</a></li>
-          <li class="breadcrumb-item active">{% translate "Add or Edit Report" %}</li>
+          <li class="breadcrumb-item active">
+            {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+              <a href="javascript: document.getElementById('form-object').submit();" class="fas fa-save">&nbsp;</a>
+            {% endif %}
+            {% translate "Add or Edit Report" %}</li>
         </ol>
       </div>
     </div>
@@ -42,9 +43,35 @@
               <div class="card-header">
                 <h3 class="card-title">{% translate "Report details" %}</h3>
               </div>
-              
-              <form role="form" method="post" enctype="multipart/form-data">
+
+              <form role="form" method="post" enctype="multipart/form-data" id="form-object">
                 {% csrf_token %}
+                <div class="form-group row">
+                  <label class="col-sm-2 col-form-label">{% translate "Report Date" %}</label>
+                  <div class="col-md-10 col-sm-10 col-xs-12">
+                    {{ form.report_date }}
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label class="col-sm-2 col-form-label">{% translate "Report Version" %}</label>
+                  <div class="col-md-10 col-sm-10 col-xs-12">
+                    {{ form.version }}
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label class="col-sm-2 col-form-label">{% translate "Audit Start Date" %}</label>
+                  <div class="col-md-10 col-sm-10 col-xs-12">
+                    {{ form.audit_start }}
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-2 col-form-label">{% translate "Audit End Date" %}</label>
+                  <div class="col-md-10 col-sm-10 col-xs-12">
+                    {{ form.audit_end }}
+                  </div>
+                </div>
                 <div class="card-body">
                   <div class="form-group row">
                     <label class="col-sm-2 col-form-label">{% translate "Product" %}</label>
@@ -58,7 +85,7 @@
                       {{ form.report_id }}
                     </div>
                   </div>
-   
+
                   <div class="form-group row">
                     <label class="col-sm-2 col-form-label">{% translate "Report Title" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
@@ -67,9 +94,37 @@
                   </div>
 
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Executive summary" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "CVSS Version" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.cvss_version }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Shares Connection for Deliverable" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.share_deliverable }}
+                  </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Shares Connection for Finding" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.share_finding }}
+                  </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Executive Summary" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
                       {{ form.executive_summary }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Audit Objectives" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.audit_objectives }}
                     </div>
                   </div>
 
@@ -101,43 +156,47 @@
                     </div>
                   </div>
 
-
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Report date" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Report Classification" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <span class="input-group-text">
-                            <i class="far fa-calendar-alt"></i>
-                          </span>
-                        </div>
-                        {{ form.report_date }}
-                      </div>
+                      {{ form.classification }}
                     </div>
                   </div>
 
-
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Audit dates" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Report Status" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <span class="input-group-text">
-                            <i class="far fa-calendar-alt"></i>
-                          </span>
-                        </div>
-                        {{ form.audit }}
-                      </div>
+                      {{ form.status }}
                     </div>
                   </div>
 
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Report Approver and Function" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.approver }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Report Author and Function" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.author }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Tags" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.tags }}
+                   </div>
+                  </div>
 
                 </div>
 
 
                 {% if form.errors %}
                    {% for field in form %}
-                       {% for error in field.errors %} 
+                       {% for error in field.errors %}
                           <div class="container">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                               <div class="alert alert-danger alert-dismissible ">
@@ -150,7 +209,7 @@
                        {% endfor %}
                    {% endfor %}
                 {% endif %}
-                
+
                 <div class="card-footer">
                   <button type="submit" class="btn btn-success">{% translate "Save Report" %}</button>
                 </div>
@@ -163,33 +222,27 @@
     </div>
 </section>
 
-
 {% endblock content %}
-
 
 {% block javascripts %}
   {{ block.super }}
-
-<script src="/static/plugins/moment/moment.min.js"></script>
-<script src="/static/plugins/inputmask/jquery.inputmask.min.js"></script>
-<script src="/static/plugins/daterangepicker/daterangepicker.js"></script>
-<script src="/static/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
-
+<script src="/static/plugins/jquery-ui/jquery-ui.min.js"></script>
 <script>
-  $(function () {
-    //Date range picker
-    $('#audit').daterangepicker({
-      locale: {
-        format: 'YYYY-MM-DD'
-      }
-    });
-
-    //Date picker
-    $('#reportdate').datetimepicker({
-        format: 'L'
-    });
-
-  })
+  $(document).ready(function() {
+     $('#id_report_date').datepicker({firstDay: 1,
+        dateFormat: "yy-mm-dd"});
+  });
 </script>
-
+<script>
+  $(document).ready(function() {
+     $('#id_audit_start').datepicker({firstDay: 1,
+        dateFormat: "yy-mm-dd"});
+  });
+</script>
+<script>
+  $(document).ready(function() {
+     $('#id_audit_end').datepicker({firstDay: 1,
+        dateFormat: "yy-mm-dd"});
+  });
+</script>
 {% endblock javascripts %}

@@ -45,13 +45,13 @@
           <table id="deliverablelist" class="table table-bordered table-hover">
               <thead>
                   <tr>
-                    <th style="width: 10%">{% translate "Generated date" %}</th>
-                    <th style="width: 28%">{% translate "File" %}</th>
-                    <th style="width: 8%">{% translate "Type" %}</th>
-                    <th style="width: 15%">{% translate "Report" %}</th>
-                    <th style="width: 12%">{% translate "Product" %}</th>
-                    <th style="width: 12%">{% translate "Customer" %}</th>
-                    <th style="width: 15%" class="text-center">{% translate "Actions" %}</th>
+                    <th style="width: 8%">{% translate "Date" %}</th>
+                    <th style="width: 50%">{% translate "File" %}</th>
+                    <th style="width: 10%">{% translate "Type" %}</th>
+                    <th style="width: 10%">{% translate "Report" %}</th>
+                    <th style="width: 10%">{% translate "Product" %}</th>
+                    <th style="width: 9%">{% translate "Customer" %}</th>
+                    <th style="width: 5%" class="text-center">{% translate "Actions" %}</th>
                   </tr>
               </thead>
               <tbody>
@@ -63,48 +63,24 @@
                     <td>{{ deliverable.filetype }}/{{ deliverable.filetemplate }}</td>
                     <td><a href="{% url 'report_view' deliverable.report.pk %}">{{ deliverable.report.title }}</a></td>
                     <td><a href="{% url 'product_view' deliverable.report.product.pk %}">{{ deliverable.report.product.name }}</a></td>
-                    <td><a href="{% url 'customer_view' deliverable.report.product.customer.pk %}">{{ deliverable.report.product.customer.name }}</a></td>
+                    <td><a href="{% url 'customer_view' deliverable.report.product.customer.pk }%">{{ deliverable.report.product.customer.name }}</a></td>
                     <td class="text-center">
                       {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                        <a href="{% url 'deliverable_download' deliverable.pk %}"><button type="button" class="btn btn-warning btn-sm"><i class="fa fa-download"></i> {% translate "Download" %}</button></a>
-                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-del-{{deliverable.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %} </button>
+                        <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{delivrable.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Delivrable"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                       {% endif %}
                     </td>
                   </tr>
-
-
-                <div class="modal modal-danger fade mm-modal-del-{{deliverable.pk}}" id="modal-danger">
-                  <div class="modal-dialog">
-                    <div class="modal-content bg-danger">
-                      <div class="modal-header">
-                        <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                      <div class="modal-body">
-                        <p>{% translate "Delete Deliverable" %}&hellip;</p>
-                      </div>
-                      <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                        <button type="button" onclick="DeleteID({{deliverable.pk}});" class="btn btn-outline-light">{% translate "Delete Deliverable" %}</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {% endfor %}
 
               </tbody>
           </table>
+          {% include "home/template_delete_item.html" with item="Delivrable" %}
         </div>
 
       </div>
 
     </div>
   </section>
-
-
 
 {% endblock content %}
 
@@ -113,31 +89,86 @@
 
 <script>
   $(function () {
+    $("#deliverablelist thead tr")
+    .clone(true)
+    .addClass("filters")
+    .appendTo("#deliverablelist thead");
     $("#deliverablelist").DataTable({
       "paging": true,
       "searching": true,
       "responsive": true,
       "lengthChange": false,
       "autoWidth": false,
+      "initComplete": function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#deliverablelist_wrapper .col-md-6:eq(0)');
   });
 </script>
 
 <script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'deliverable_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
+  $(document).on("click", ".modal-item-action", function (e) {
+     var itemId = e.target.id;
+     $(".item-id #itemID").val(itemId);
+  });
+  function Delete_Delivrable() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'deliverable_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
 
-            success : function(json) {
-              document.location.href = "{% url 'deliverable_list' %}";
-            }
-        })
+        success : function(json) {
+          document.location.href = "{% url 'deliverable_list' %}";
+        }
+    })
   }
 
 </script>

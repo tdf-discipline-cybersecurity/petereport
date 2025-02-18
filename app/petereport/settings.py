@@ -22,32 +22,89 @@ from config.petereport_config import PETEREPORT_MARKDOWN, DJANGO_CONFIG, PETEREP
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = DJANGO_CONFIG['secret_key']
 
+# CVSS Versions
+CVSS_VERSIONS_CHOICE = (
+        ('', _('(Select CVSS Version)')),
+        ('3.1', _('3.1')),
+        ('4.0', _('4.0')),)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = DJANGO_CONFIG['debug']
+DJANGO_LOG_LEVEL = DJANGO_CONFIG['django_log_level']
+PETEREPORT_LOG_LEVEL = DJANGO_CONFIG['petereport_log_level']
+DEBUG_PANDOC_ON_ERROR = PETEREPORT_MARKDOWN['debug_pandoc_on_error']
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "django": {
+            "format": "[DJANGO] [{asctime}] [{levelname}] [{filename}:{lineno} - {module}.{funcName}] {message}",
+            "style": "{",
+        },
+        "petereport": {
+            "format": "[PETEREPORT] [{asctime}] [{levelname}] [{filename}:{lineno} - {module}.{funcName}] {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "django_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "django",
+        },
+        "petereport_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "petereport",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["django_console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": True,
+        },
+        "preport": {
+            "handlers": ["petereport_console"],
+            "level": PETEREPORT_LOG_LEVEL,
+            "propagate": True,
+        },
+    },
+}
 
 ADMIN_ENABLED = DJANGO_CONFIG['admin_module']
 
 ALLOWED_HOSTS = DJANGO_CONFIG['allowed_hosts']
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = DJANGO_CONFIG['upload_memory_size'] 
+DATA_UPLOAD_MAX_MEMORY_SIZE = DJANGO_CONFIG['upload_memory_size']
 
 CSRF_TRUSTED_ORIGINS =  DJANGO_CONFIG['csrf_trusted_origins']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'martor',
-    'django_bleach',
-    'preport',
+    "dal",
+    "dal_select2",
+    "grappelli",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "martor",
+    "django_bleach",
+    "preport",
+    "multi_email_field",
+    "django_extensions",
+    "taggit",
+    "django_sendfile",
 ]
 
 MIDDLEWARE = [
@@ -82,15 +139,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'petereport.wsgi.application'
 
+
+# Database
+# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db' / 'petereport.sqlite3',
     }
 }
 
 ATOMIC_REQUESTS = True
 
+# Password validation
+# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -131,21 +194,27 @@ LANGUAGES = (
 )
 
 # Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.1/howto/static-files/
+
 STATIC_URL = 'static/'
 
 # Default primary key field type
+# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 ###################### PETEREPORT ######################
 
 MAIN_PROJECT = os.path.dirname(__file__)
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'petereport', 'collectstatic')
+
 
 STATICFILES_DIRS = (
+    # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(MAIN_PROJECT, 'static/'),
+    os.path.join(MAIN_PROJECT, 'static'),
 )
 
 MEDIA_URL = 'media/'
@@ -160,22 +229,7 @@ LOGOUT_REDIRECT_URL = '/'
 SESSION_COOKIE_AGE = 480*60
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-TEMPLATES_ROOT = os.path.join(BASE_DIR, PETEREPORT_TEMPLATES['templates_root'])
-
-TEMPLATES_DIRECTORIES = {}
-
-TPLS_ROOT = TEMPLATES_ROOT
-for tpl in os.listdir(TPLS_ROOT):
-    tpl_path = os.path.join(TPLS_ROOT, tpl)
-    if os.path.isdir(tpl_path):
-        cst_list = []
-        for cst in os.listdir(tpl_path):
-            cst_path = os.path.join(tpl_path, cst)
-            if os.path.isdir(cst_path):
-                cst_list.append(cst)
-        TEMPLATES_DIRECTORIES[tpl] = cst_list
-
-###################### MARTOR ######################
+# MARTOR
 
 # Choices are: "semantic", "bootstrap"
 MARTOR_THEME = 'bootstrap'
@@ -183,11 +237,11 @@ MARTOR_THEME = 'bootstrap'
 # Global martor settings
 # Input: string boolean, `true/false`
 MARTOR_ENABLE_CONFIGS = {
-    'emoji': 'false',       # to enable/disable emoji icons.
+    'emoji': 'true',        # to enable/disable emoji icons.
     'imgur': 'true',        # to enable/disable imgur/custom uploader.
     'mention': 'false',     # to enable/disable mention
     'jquery': 'true',       # to include/revoke jquery (require for admin default django)
-    'living': 'false',      # to enable/disable live updates in preview
+    'living': 'false',       # to enable/disable live updates in preview
     'spellcheck': 'false',  # to enable/disable spellcheck in form textareas
     'hljs': 'true',         # to enable/disable hljs highlighting in preview
 }
@@ -196,7 +250,7 @@ MARTOR_ENABLE_CONFIGS = {
 MARTOR_TOOLBAR_BUTTONS = [
     'bold', 'italic', 'horizontal', 'heading', 'pre-code',
     'blockquote', 'unordered-list', 'ordered-list',
-    'link', 'image-link', 'image-upload', 'emoji', 
+    'link', 'image-link', 'image-upload', 'emoji',
     'direct-mention', 'toggle-maximize', 'help'
 ]
 
@@ -224,19 +278,28 @@ MARTOR_MARKDOWN_EXTENSIONS = [
 ]
 
 # Markdown Extensions Configs
-MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
+MARTOR_MARKDOWN_EXTENSION_CONFIGS = {} # type: ignore #mypy
 
 CSRF_COOKIE_HTTPONLY = False
 
 # Upload to locale storage
-MARTOR_UPLOAD_PATH = os.path.join(MEDIA_ROOT, 'images/uploads')
-MARTOR_UPLOAD_URL = '/api/uploader/'  # change to local uploader
+UPLOAD_DIRECTORY = 'uploads'
+MARTOR_UPLOAD_PATH = os.path.join(MEDIA_ROOT, UPLOAD_DIRECTORY)
+MARTOR_UPLOAD_URL = '/martor/api/uploader/'  # change to local uploader
 MARTOR_MEDIA_URL = os.path.join(PETEREPORT_MARKDOWN['media_host'], MEDIA_URL)
 
+# SendFile configuration
+SENDFILE_BACKEND = DJANGO_CONFIG['sendfile_backend']
+SENDFILE_ROOT = MARTOR_UPLOAD_PATH
+SENDFILE_URL = os.path.join('/', MEDIA_URL, 'protected')
+
+# Markdown Extensions
+# MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://www.webfx.com/tools/emoji-cheat-sheet/graphics/emojis/'     # from webfx
 MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/emoji/'                  # default from github
 
-
 # Maximum Upload Image
+# 500 KB - 524288
+# 1 MB - 1048576
 # 2.5MB - 2621440
 # 5MB - 5242880
 # 10MB - 10485760
@@ -245,9 +308,23 @@ MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/e
 # 100MB 104857600
 # 250MB - 214958080
 # 500MB - 429916160
-MAX_IMAGE_UPLOAD_SIZE = 5242880  # 5MB
+MAX_IMAGE_UPLOAD_SIZE = 5242880
 
 SERVER_CONF = DJANGO_CONFIG['server_host']
+TEMPLATES_ROOT = os.path.join(BASE_DIR, PETEREPORT_TEMPLATES['templates_root'])
+
+TEMPLATES_DIRECTORIES = {}
+TPLS_ROOT = os.path.join(TEMPLATES_ROOT, 'tpl')
+for tpl in os.listdir(TPLS_ROOT):
+    tpl_path = os.path.join(TPLS_ROOT, tpl)
+    if os.path.isdir(tpl_path):
+        cst_list = []
+        for cst in os.listdir(tpl_path):
+            cst_path = os.path.join(tpl_path, cst)
+            if os.path.isdir(cst_path):
+                cst_list.append(cst)
+        TEMPLATES_DIRECTORIES[tpl] = cst_list
+
 
 REPORTS_MEDIA_ROOT = os.path.join(BASE_DIR, PETEREPORT_TEMPLATES['storage_reports'])
 
@@ -272,7 +349,6 @@ ALLOWED_HTML_ATTRIBUTES = [
     "height", "href", "id", "name", "reversed", "rowspan",
     "scope", "src", "style", "title", "type", "width"
 ]
-
 
 # BLEACH
 
@@ -309,5 +385,3 @@ BLEACH_STRIP_COMMENTS = False
 
 # Init Application
 initApplication()
-
-

@@ -22,7 +22,11 @@
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
           <li class="breadcrumb-item"><a href="{% url 'customer_list' %}">{% translate "Customers" %}</a></li>
-          <li class="breadcrumb-item active">{% translate "Add or Edit customer" %}</li>
+          <li class="breadcrumb-item active">
+            {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+              <a href="javascript: document.getElementById('form-object').submit();" class="fas fa-save">&nbsp;</a>
+            {% endif %}
+            {% translate "Add or Edit customer" %}</li>
         </ol>
       </div>
     </div>
@@ -40,28 +44,45 @@
                 <h3 class="card-title">{% translate "Customer details" %}</h3>
               </div>
 
-              <form role="form" method="post" enctype="multipart/form-data">
+              <form id="form-object" role="form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="card-body">
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Name" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Customer Name" %}</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                         {{ form.name }}
                       </div>
                   </div>
-
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Contact" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Contacts Emails" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
-                      {{ form.contact }}
+                      {{ form.contact_list }}
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Security Email" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.contact_sp_mail }}
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Contract Email" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.contact_dp_mail }}
                     </div>
                   </div>
                  
-
                   <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">{% translate "Description" %}</label>
+                    <label class="col-sm-2 col-form-label">{% translate "Customer Description" %}</label>
                     <div class="col-md-10 col-sm-10 col-xs-12">
                       {{ form.description }}
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Tags" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.tags }}
                     </div>
                   </div>
 

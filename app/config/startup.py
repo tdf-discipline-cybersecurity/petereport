@@ -2,6 +2,7 @@
 
 import os
 import django
+
 from config.petereport_config import PETEREPORT_CONFIG
 
 def initApplication():
@@ -30,7 +31,6 @@ def createSettings():
 
     except DjangoError:
         pass
-
 
 def createAdminUser():
 
@@ -68,4 +68,3 @@ def createAdminUser():
 
     except DjangoError:
         pass
-

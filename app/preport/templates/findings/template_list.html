@@ -46,12 +46,10 @@
           <table id="templatelist" class="table table-bordered table-hover">
               <thead>
                   <tr>
-                    <th style="width: 50%" class="text-center">{% translate "Finding title" %}</th>
-                    <th style="width: 10%" class="text-center">{% translate "Severity" %}</th>
-                    <th style="width: 10%" class="text-center">{% translate "CVSS Score" %}</th>
-                    <th style="width: 7%" class="text-center">{% translate "CWE" %}</th>
-                    <th style="width: 7%" class="text-center">{% translate "OWASP" %}</th>
-                    <th style="width: 20%" class="text-center">{% translate "Actions" %}</th>
+                    <th style="width: 35%">{% translate "Finding title" %}</th>
+                    <th style="width: 5%">{% translate "Severity" %}</th>
+                    <th style="width: 35%">{% translate "CVSS Score" %}</th>
+                    <th style="width: 23%" class="text-center">{% translate "Actions" %}</th>
                   </tr>
               </thead>
               <tbody>
@@ -78,58 +76,26 @@
 
                     </td>
 
-                    <td>
-                        {{template.cvss_score}}
-                    </td>
-
-                    <td>
-                        <a href="https://cwe.mitre.org/data/definitions/{{template.cwe.cwe_id}}.html">{{ template.cwe.cwe_id }}</a>
-                    </td>
-
-                    <td>
-                        <a href="{{ template.owasp.owasp_url }}">{{ template.owasp.owasp_full_id }}</a>
-                    </td>
-
+                      <td>
+                          {{template.cvss_base_score}}
+                      </td>
 
                     <td align="center">
                         <a href="{% url 'template_view' template.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
 
                         {% if user.groups.all.0|stringformat:'s' == "administrator" %}
-                          <a href="{% url 'template_edit' template.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
-                          <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target=".mm-modal-{{template.pk}}"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                          <a href="{% url 'template_edit' template.pk %}#{{ template.get_cvss_score_anchor }}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                          <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{template.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-Template"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                          <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{template.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Template"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
                         {% endif %}
-
                     </td>
-
-
                   </tr>
-
-                      <div class="modal modal-danger fade mm-modal-{{template.pk}}" id="modal-danger">
-                        <div class="modal-dialog">
-                          <div class="modal-content bg-danger">
-                            <div class="modal-header">
-                              <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <div class="modal-body">
-                              <p>{% translate "Delete Template" %}&hellip;</p>
-                            </div>
-                            <div class="modal-footer justify-content-between">
-                              <button type="button" class="btn btn-outline-light" data-dismiss="modal">{% translate "Close" %}</button>
-                              <button type="button" onclick="DeleteID({{template.pk}});" class="btn btn-outline-light">{% translate "Delete Template" %}</button>
-
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
                 {% endfor %}
 
                 </tbody>
               </table>
-
+              {% include "home/template_delete_item.html" with item="Template" %}
+              {% include "home/template_duplicate_item.html" with item="Template" %}
         </div>
       </div>
     </div>
@@ -143,6 +109,10 @@
 
 <script>
   $(function () {
+    $('#templatelist thead tr')
+    .clone(true)
+    .addClass('filters')
+    .appendTo('#templatelist thead');
     $("#templatelist").DataTable({
       "paging": true,
       "searching": true,
@@ -150,25 +120,93 @@
       "lengthChange": false,
       "autoWidth": false,
       "ordering": true,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#templatelist_wrapper .col-md-6:eq(0)');
   });
 </script>
 
 <script>
-  function DeleteID(del_id) {
-        $.ajax({
-            type: 'POST',
-            url: "{% url 'template_delete' %}",
-            headers:{
-              "X-CSRFToken": '{{ csrf_token }}'
-            },
-            data : { 'delete_id': del_id},
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
+  function Delete_Template() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'template_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
 
-            success : function(json) {
-              document.location.href = "{% url 'template_list' %}";
-            }
-        })
+        success : function(json) {
+          document.location.href = "{% url 'template_list' %}";
+        }
+    })
+  }
+  function Duplicate_Template() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'template_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : {  'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'template_list' %}";
+        }
+    })
   }
 </script>
 

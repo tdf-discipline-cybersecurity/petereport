@@ -9,16 +9,19 @@
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
       {% endblock meta %}
 
-      <title>PeTeReport | {% block title %}{% endblock %}</title>
+      <title>{{application_name}} | {% block title %}{% endblock %}</title>
 
       <link rel="shortcut icon" href="/static/favicon.ico" />
 
       {% block stylesheets %}
-      
+
       <!-- Google Font: Source Sans Pro -->
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+      <link rel="stylesheet" href="/static/fonts/fonts.css">
       <!-- Font Awesome -->
       <link rel="stylesheet" href="/static/plugins/fontawesome-free/css/all.min.css">
+
+      <!-- AutoComplete -->
+      <link rel="stylesheet" href="/static/plugins/autocomplete_light/select2.css">
 
       <!-- DataTables -->
       <link rel="stylesheet" href="/static/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
@@ -38,6 +41,9 @@
       <link href="/static/martor/plugins/css/resizable.min.css" type="text/css" media="all" rel="stylesheet" />
       <link href="/static/martor/css/martor.bootstrap.min.css" type="text/css" media="all" rel="stylesheet" />
 
+      <!-- custom -->
+      <link href="/static/dist/css/custom.css" type="text/css" media="all" rel="stylesheet" />
+
       {% endblock stylesheets %}
 
     {% endblock head %}
@@ -47,6 +53,9 @@
 
 
 <body class="hold-transition sidebar-mini">
+<div class="item-id" display="false">
+  <input type="text" name="itemID" id="itemID" value="" hidden="true" />
+</div>
 {% block body %}
 
 <div class="wrapper">
@@ -60,7 +69,7 @@
           {% include "home/aside.html" %}
       {% endblock aside_navigation %}
 
-      
+
       <div class="content-wrapper">
           {% block content %}
             <!-- {{ content }} -->
@@ -86,6 +95,9 @@
 <script src="/static/plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="/static/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AutoComplete -->
+<script src="/static/plugins/autocomplete_light/autocomplete_light.min.js"></script>
+<script src="/static/plugins/autocomplete_light/select2.min.js"></script>
 <!-- Select2 -->
 <script src="/static/plugins/select2/js/select2.full.min.js"></script>
 <!-- DataTables  & Plugins -->
@@ -121,19 +133,25 @@
 <script type="text/javascript" src="/static/martor/plugins/js/emojis.min.js"></script>
 <script type="text/javascript" src="/static/martor/js/martor.bootstrap.min.js"></script>
 
+  <script>
+    $('form [name="title"]').attr({
+      'class': 'form-control',
+      'placeholder': 'Post Title'
+    });
+  </script>
 
-<script>
-  $('.martor-preview pre').each(function(i, block){
-      hljs.highlightBlock(block);
-  });
-</script>
+    <script>
+    $('.martor-preview pre').each(function(i, block){
+        hljs.highlightBlock(block);
+    });
+  </script>
 
 <!-- jQuery Knob -->
 <script src="/static/plugins/jquery-knob/jquery.knob.min.js"></script>
 
 <!-- Last release ECharts -->
 <script src="/static/echarts.min.js"></script>
-        
+
 
 {% endblock javascripts%}
 

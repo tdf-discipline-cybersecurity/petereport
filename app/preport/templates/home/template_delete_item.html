@@ -1,0 +1,36 @@
+{% load i18n %}
+<div class="modal modal-danger fade modal-item-action-delete-{{item}}" id="modal-danger">
+  <div class="modal-dialog">
+    <div class="modal-content bg-danger">
+      <div class="modal-header">
+        <h4 class="modal-title">{% translate "Are you sure?" %}</h4>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Delete {{item}}&hellip;</p>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          data-dismiss="modal"
+        >
+          {% translate "Close" %}
+        </button>
+        <button
+          type="button"
+          onclick="Delete_{{item}}();"
+          class="btn btn-outline-light"
+        >Delete {{item}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

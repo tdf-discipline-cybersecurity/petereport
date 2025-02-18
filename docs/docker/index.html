@@ -341,6 +341,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../django/" class="md-nav__link">
+        Django
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -589,8 +603,7 @@
 
 <h1 id="docker">Docker</h1>
 <h2 id="environment">Environment</h2>
-<p>Follow oficial installation guidelines: <a href="https://docs.docker.com/engine/">Docker Engine overview</a>. Example in Ubuntu:</p>
-<pre><code class="language-bash">sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+<pre><code class="language-bash">sudo apt install docker.io docker-compose
 </code></pre>
 <h2 id="deployment">Deployment</h2>
 <ol>
@@ -608,8 +621,8 @@ cd petereport
 <p>Build environment</p>
 </li>
 </ol>
-<pre><code class="language-bash">docker compose build --build-arg TARGETARCH=amd64
-docker compose up
+<pre><code class="language-bash">docker-compose build --build-arg TARGETARCH=amd64
+docker-compose up
 </code></pre>
 <ol>
 <li>Go to <a href="https://127.0.0.1/">https://127.0.0.1/</a></li>
@@ -653,13 +666,13 @@ docker compose up
       
       
         
-        <a href="../default_creds/" class="md-footer__link md-footer__link--next" aria-label="Next: Default Credentials" rel="next">
+        <a href="../django/" class="md-footer__link md-footer__link--next" aria-label="Next: Django" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Default Credentials
+              Django
             </div>
           </div>
           <div class="md-footer__button md-icon">

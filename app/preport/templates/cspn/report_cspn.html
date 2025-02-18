@@ -1,0 +1,188 @@
+{% extends 'home/template.html' %}
+
+{% load i18n %}
+{% load bleach_tags %}
+
+{% block title %} {% translate "CSPN Evaluations" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+
+
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>{% translate "CSPN Evaluations" %}</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'customer_view' DB_report_query.product.customer.pk %}">{{ DB_report_query.product.customer.name | bleach}}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'product_view' DB_report_query.product.pk %}">{{ DB_report_query.product.name | bleach}}</a></li>
+            <li class="breadcrumb-item active"><a href="{% url 'report_view' DB_report_query.pk %}">{{ DB_report_query.title}}</a></li>
+          </ol>
+        </div>
+      </div>
+
+
+      <br>
+
+      <div class="row">
+        <div class="col-md-12">
+
+          {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+            <a href="{% url 'cspn_add' DB_report_query.pk %}"><button type="button" class="btn btn-primary"><i class="fa fa-edit"></i> {% translate "Add CSPN Evaluation" %}</button></a>
+         {% endif %}
+
+        </div>
+      <br>
+
+    </div>
+  </section>
+
+
+  <section class="content">
+
+    <div class="container-fluid">
+      <div class="card card-outline card-danger">
+        <div class="card-header">
+          <h3 class="card-title">{{ count_cspn_query }} {% translate "CSPN Evaluations" %}</h3>
+
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+              <i class="fas fa-minus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <div class="row">
+            <div class="col-md-12">
+
+
+            {% if count_cspn_query == 0 %}
+
+              <a href="{% url 'cspn_add' DB_report_query.pk %}"><button type="button" class="btn btn-success btn-xm">{% translate "Add CSPN Evaluation" %}</button></a>
+
+            {% else %}
+
+                  <table id="cspnlist" class="table table-bordered table-hover">
+
+                        <thead>
+                          <tr>
+                            <th style="width: 60%">{% translate "Stage" %}</th>
+                            <th style="width: 10%">{% translate "Status" %}</th>
+                            <th style="width: 30%"class="text-center">{% translate "Actions" %}</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {% for cspn in DB_cspn_query %}
+                          <tr>
+                                  <td>
+                                      {{ cspn.stage.get_label }}
+                                  </td>
+                                  <td>
+                                    {% if cspn.status == "Evaluated" %}
+                                        <b><font color="green">Evaluated</font></b>
+                                    {% else %}
+                                        <b><font color="orange">Not Evaluated</font></b>
+                                    {% endif %}
+
+                                  </td>
+                                  <td align="center">
+                                      <a href="{% url 'cspn_view' cspn.pk %}"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-folder"></i> {% translate "View" %}</button></a>
+
+                                      {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+                                        <a href="{% url 'cspn_edit' cspn.pk %}"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-edit"></i> {% translate "Edit" %}</button></a>
+                                        <button type="button" class="btn btn-warning btn-sm modal-item-action" id="{{cspn.pk}}" data-toggle="modal" data-target=".modal-item-action-clone-CSPN"><i class="fas fa-copy"></i> {% translate "Clone" %} </button>
+                                        <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{cspn.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-CSPN"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+
+                                      {% endif %}
+
+                                  </td>
+
+                          </tr>
+                          {% endfor %}
+
+                        </tbody>
+                      </table>
+                      {% include "home/template_delete_item.html" with item="CSPN" %}
+                      {% include "home/template_duplicate_item_to_report.html" with item="CSPN" %}
+                {% endif %}
+                </div>
+               </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+<script>
+  $(function () {
+    $("#cspnlist").DataTable({
+      "paging": true,
+      "searching": true,
+      "responsive": true,
+      "lengthChange": false,
+      "autoWidth": false,
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+    }).buttons().container().appendTo('#cspnlist_wrapper .col-md-6:eq(0)');
+  });
+</script>
+
+<script>
+  $(document).ready(function() {
+    $("#select2ReportToClone").select2();
+  });
+  $(document).on("click", ".modal-item-action", function (e) {
+     var itemId = e.target.id;
+     $(".item-id #itemID").val(itemId);
+  });
+  
+  function Delete_CSPN() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'cspn_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemID},
+
+        success : function(json) {
+          document.location.href = "{% url 'cspn_list' %}";
+        }
+    })
+  }
+  function Duplicate_CSPN() {
+    var itemId = $(".item-id #itemID").val();
+    var report_to_clone = $("#id_report_to_clone").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'cspn_duplicate' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'report_to_clone': report_to_clone, 'duplicate_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'cspn_list' %}";
+        }
+    })
+  }
+</script>
+
+{% endblock javascripts %}

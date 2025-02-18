@@ -1,0 +1,172 @@
+{% load i18n %}
+# {% translate "Pentest Overview" %}
+
+## {% translate "Restricted Use Warning" %}
+
+This report was prepared by **{{md_author}}** at the request of **{{DB_report_query.product.customer.name}}** to whom it is delivered.
+Any other use is strictly prohibited.
+
+Any communication, publication, disclosure, dissemination or reproduction of this report or any portion of its contents
+to third parties without the advance written consent of **{{md_author}}** is not authorized.
+
+## {% translate "Context" %}
+
+**{{md_author}}** were engaged by **{{DB_report_query.product.customer.name}}** to perform a pentest against **{{DB_report_query.product.name}}** part in a way
+that would cover major areas of security controls.
+The {{md_author}} assessment highlights vulnerabilities that could be exploited by an attacker in order to compromise
+the confidentiality, integrity and availability of the system and applications.
+
+{{md_author}} Consultants worked from {{DB_report_query.audit_start|date:"Y-m-d" }} until {{DB_report_query.audit_end|date:"Y-m-d" }} from {{md_author}} Site ({{md_address}}).
+
+This mission must lead to:
+
+- GreyBox Pentest results,
+
+- Recommendations to improve the level of security.
+
+## {% translate "General Pentest Objectives" %}
+
+The objective of this security assessment was for **{{DB_report_query.product.customer.name}}** to understand
+the current IT risk profile for their external services and to provide recommendations to help reduce these risks.
+The exercise was designed to replicate the activities of a threat actor with the intention of gaining access to **{{DB_report_query.product.name}}**
+in order to either disrupt the production, steal information or cause damage.
+
+This work was performed based on OWASP Top 10 attacks and {{md_author}} experience.
+The table below specify the list major attacks performed against the application :
+
+\begin{center}
+\rowcolors{2}{blue!10}{blue!5}
+\begin{tabular}{c}
+    \hline
+    \rowcolor{blue!30}
+    Attacks vectors \\
+    \hline\hline
+    Injection \\
+    Broken Authentication \\
+    Sensitive data exposure \\
+    XML External Entities (XXE) \\
+    Broken Access control \\
+    Security misconfigurations \\
+    Cross-Site Scripting (XSS) \\
+    Insecure Deserialization \\
+    Using Components with known vulnerabilities \\
+    Insufficient logging and monitoring \\
+    \hline
+\end{tabular}
+\end{center}
+
+Other attack vectors were tested by the {{md_author}} to cover system, infrastructure and API.
+
+## {% translate "General Limitations" %}
+
+This assessment was based on limited observation and/or testing at a single point in time.
+Over time as systems, environments, people and other parameters are subject to change, there is a risk that this report will not represent the current state.
+
+The information gathered is subject to inherent limitations, therefore weaknesses,
+errors or irregularities which may have been present at the time of the audit may not have been detected.
+Identification of all existing vulnerabilities cannot be guaranteed.
+{{md_author}} cannot estate that assets within the scope of work are free of weaknesses or immune to attacks.
+
+## {% translate "Risk Severities Classification" %}
+
+For each vulnerability, you must mitigate the risks within the deadlines presented in the table below.
+
+{{md_author}} can only provide a technical rating in the absence of knowledge of the business challenges of the application or infrastructure being audited. To this end, the “Environmental” assessment can be used by the owner to revise certain ratings upwards or downwards.
+
+\begin{center}
+\begin{tabular}{cc}
+    \hline
+    \rowcolor{blue!30}
+    Risk Level & Mitigation Delay \\
+    \hline\hline
+    \rowcolor{criticalcolor}
+    Critical & 1 day \\
+    \rowcolor{highcolor}
+    High & 3 days \\
+    \rowcolor{mediumcolor}
+    Medium & 14 days \\
+    \rowcolor{lowcolor}
+    Low & 30 days \\
+    \hline
+\end{tabular}
+\end{center}
+
+{% if DB_report_query.product.description %}
+## {% translate "Product Description" %}
+
+{{DB_report_query.product.description | safe}}
+{% endif %}
+
+{% if DB_report_query.audit_objectives %}
+## {% translate "Audit Objectives" %}
+
+{{DB_report_query.audit_objectives | safe}}
+{% endif %}
+
+{% if DB_report_query.methodology %}
+## {% translate "Methodology" %}
+
+{{DB_report_query.methodology | safe}}
+{% endif %}
+
+{% if DB_report_query.scope or DB_report_query.outofscope %}
+## {% translate "Scope" %}
+
+{% if DB_report_query.scope %}
+### {% translate "In Scope" %}
+
+{{DB_report_query.scope | safe}}
+{% endif %}
+
+{% if DB_report_query.outofscope %}
+### {% translate "Out of Scope" %}
+
+{{DB_report_query.outofscope | safe}}
+{% endif %}
+{% endif %}
+
+\pagebreak
+
+# {% translate "Executive Summary" %}
+
+{% if DB_report_query.executive_summary %}
+## {% translate "Review" %}
+{{DB_report_query.executive_summary | safe}}
+{% endif %}
+
+{% if DB_report_query.recommendation %}
+## {% translate "Recommendations" %}
+
+{{DB_report_query.recommendation | safe}}
+{% endif %}
+
+{% if counter_finding > 0 %}
+## {% translate "Summary of Findings Identified" %}
+
+There were a number of findings during the assessment including the following:
+
+{{finding_summary | safe}}
+
+![Executive Summary]({{report_executive_summary_image}})
+
+![Breakdown by OWASP Categories]({{report_owasp_categories_image}})
+{% endif %}
+
+{% if counter_finding > 0 %}
+\pagebreak
+# {% translate "Findings Details" %}
+The following are the list of findings with technical details and proof of concept.
+{{template_findings | safe}}
+{% endif %}
+
+{% if counter_appendix > 0 %}
+\pagebreak
+# Additional Notes
+{{template_appendix | safe}}
+{% endif %}
+
+{% if counter_attackflow > 0 %}
+\pagebreak
+# Attack Flows
+{{template_attackflows | safe}}
+{% endif %}

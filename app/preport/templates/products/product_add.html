@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load bleach_tags %}
 
-{% block title %} {% translate "Products" %} {% endblock title %}
+{% block title %} {% translate "Product" %} {% endblock title %}
 
 {% block stylesheets %}
   {{ block.super }}
@@ -21,8 +21,12 @@
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
-          <li class="breadcrumb-item"><a href="/product/list/">{% translate "Products" %}</a></li>
-          <li class="breadcrumb-item active">{% translate "Add or Edit product" %}</li>
+          <li class="breadcrumb-item"><a href="{% url 'product_list' %}">{% translate "Products" %}</a></li>
+          <li class="breadcrumb-item active">
+            {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+              <a href="javascript: document.getElementById('form-object').submit();" class="fas fa-save">&nbsp;</a>
+            {% endif %}
+            {% translate "Add or Edit product" %}</li>
         </ol>
       </div>
     </div>
@@ -34,13 +38,12 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12">
-
             <div class="card card-outline card-primary">
               <div class="card-header">
                 <h3 class="card-title">{% translate "Product details" %}</h3>
               </div>
-              
-              <form role="form" method="post" enctype="multipart/form-data">
+
+              <form role="form" method="post" enctype="multipart/form-data" id="form-object">
                 {% csrf_token %}
                 <div class="card-body">
                   <div class="form-group row">
@@ -49,7 +52,6 @@
                         {{ form.name }}
                       </div>
                   </div>
-
                   <div class="form-group row">
                     <label class="col-sm-2 col-form-label">{% translate "Customer" %}</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
@@ -63,12 +65,35 @@
                       {{ form.description }}
                     </div>
                   </div>
-   
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Product Recovery" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.recovery }}
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Product Installation" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.installation }}
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">{% translate "Product Usage" %}</label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                      {{ form.usage }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label class="col-sm-2 col-form-label">{% translate "Tags" %}</label>
+                  <div class="col-md-10 col-sm-10 col-xs-12">
+                    {{ form.tags }}
                 </div>
 
                 {% if form.errors %}
                    {% for field in form %}
-                       {% for error in field.errors %} 
+                       {% for error in field.errors %}
                           <div class="container">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                               <div class="alert alert-danger alert-dismissible ">
@@ -81,13 +106,11 @@
                        {% endfor %}
                    {% endfor %}
                 {% endif %}
-                
                 <div class="card-footer">
                   <button type="submit" class="btn btn-primary">{% translate "Save Product" %}</button>
                 </div>
               </form>
             </div>
-
         </div>
       </div>
     </div>

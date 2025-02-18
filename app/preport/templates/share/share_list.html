@@ -1,0 +1,200 @@
+{% extends 'home/template.html' %}
+
+{% load i18n %}
+{% load bleach_tags %}
+{% load app_filters %}
+
+{% block title %} {% translate "Share List" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>{% translate "Share List" %}</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="/">{% translate "Home" %}</a></li>
+              <li class="breadcrumb-item active">{% translate "Share" %}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+
+    <div class="container-fluid">
+      <div class="card card-outline card-primary">
+        <div class="card-header">
+          <h3 class="card-title">{{ DB_share_query.count }} {% translate "Share" %}{{ DB_share_query.count|pluralize:"s" }}</h3>
+
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+              <i class="fas fa-minus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <table id="sharelist" class="table table-bordered table-hover">
+              <thead>
+                  <tr>
+                      <th style="width: 10%">
+                          {% translate "Title" %}
+                      </th>
+                      <th style="width: 10%">
+                          {% translate "Type" %}
+                      </th>
+                      <th style="width: 60%">
+                          {% translate "URL" %}
+                      </th>
+                      <th style="width: 20%" class="text-center">
+                          {% translate "Actions" %}
+                      </th>
+                  </tr>
+              </thead>
+              <tbody>
+
+                  {% for share in DB_share_query %}
+
+                    <tr>
+                      <td>
+                        <span class="pull-right badge bg-blue">{{ share.title }}</span>
+                      </td>
+                      <td>
+                        <span class="pull-right badge bg-blue">{{ share.type }}</span>
+                      </td>
+                      <td>
+                        <span class="pull-right badge bg-blue">{{ share.url }}</span>
+                      </td>
+                      <td class="project-actions text-center">
+                          <a class="btn btn-primary btn-sm" href="{% url 'share_view' share.pk %}">
+                              <i class="fas fa-folder"></i>
+                              {% translate "View" %}
+                          </a>
+
+                          {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+
+                            <a class="btn btn-info btn-sm" href="{% url 'share_edit' share.pk %}">
+                                <i class="fas fa-pencil-alt"></i>
+                                {% translate "Edit" %}
+                            </a>
+
+                            <button type="button" class="btn btn-danger btn-sm modal-item-action" id="{{share.pk}}" data-toggle="modal" data-target=".modal-item-action-delete-Share"><i class="fas fa-trash"></i> {% translate "Delete" %}</button>
+                          {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+           {% include "home/template_delete_item.html" with item="Share" %}
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+<script>
+  $(function () {
+    $('#sharelist thead tr')
+    .clone(true)
+    .addClass('filters')
+    .appendTo('#sharelist thead');
+    $("#sharelist").DataTable({
+      "paging": true,
+      "searching": true,
+      "responsive": true,
+      "lengthChange": false,
+      "autoWidth": false,
+      "orderCellsTop": true,
+      "fixedHeader": true,
+      initComplete: function () {
+        var api = this.api();
+
+        // For each column
+        api
+          .columns()
+          .eq(0)
+          .each(function (colIdx) {
+              // Set the header cell to contain the input element
+              var cell = $('.filters th').eq(
+                $(api.column(colIdx).header()).index()
+              );
+              var title = $(cell).text().trim();
+              if(title != "{% translate 'Actions' %}"){
+                $(cell).html('<input type="text" placeholder="' + title + '" />');
+
+                // On every keypress in this input
+                $('input',
+                    $('.filters th').eq($(api.column(colIdx).header()).index())
+                ).off('keyup change')
+                  .on('change', function (e) {
+                    // Get the search value
+                    $(this).attr('title', $(this).val());
+                    var regexr = '({search})';
+                    var cursorPosition = this.selectionStart;
+                    // Search the column for that value
+                    api.column(colIdx)
+                        .search(
+                        this.value != '' ? regexr.replace('{search}', '(((' + this.value + ')))') : '',
+                        this.value != '',
+                        this.value == ''
+                        )
+                        .draw();
+                    })
+                    .on('keyup', function (e) {
+                      e.stopPropagation();
+                      $(this).trigger('change');
+                      $(this)
+                        .focus()[0]
+                        .setSelectionRange(cursorPosition, cursorPosition);
+                    });
+                } else {
+                  $(cell).html('');
+                };
+              });
+      },
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+    }).buttons().container().appendTo('#sharelist_wrapper .col-md-6:eq(0)');
+  });
+</script>
+
+
+<script>
+
+  $(document).on("click", ".modal-item-action", function (e) {
+    var itemId = e.target.id;
+    $(".item-id #itemID").val(itemId);
+  });
+  function Delete_Share() {
+    var itemId = $(".item-id #itemID").val();
+    $.ajax({
+        type: 'POST',
+        url: "{% url 'share_delete' %}",
+        headers:{
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        data : { 'delete_id': itemId},
+
+        success : function(json) {
+          document.location.href = "{% url 'share_list' %}";
+        }
+    })
+  }
+</script>
+
+{% endblock javascripts %}

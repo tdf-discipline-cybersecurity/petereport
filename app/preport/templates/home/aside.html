@@ -2,7 +2,7 @@
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
 
     <a href="/" class="brand-link">
-<img src="{{company_picture.url}}" alt="{{company_name}} Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+<img src="/media/{{company_picture}}" alt="{{company_name}} Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">{{company_name}}</span>
     </a>
 
@@ -12,7 +12,7 @@
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
             <a href="/" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt text-orange"></i>
+              <i class="nav-icon fas fa-tachometer-alt text-light"></i>
               <p>
                 {% translate "Dashboard" %}
               </p>
@@ -23,13 +23,12 @@
 
           <li class="nav-item">
             <a href="/" class="nav-link">
-              <i class="nav-icon fas fa-cogs text-white"></i>
+              <i class="nav-icon fas fa-cogs text-info"></i>
               <p>
                 {% translate "Configuration" %}
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
-
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'user_list' %}" class="nav-link">
@@ -47,7 +46,6 @@
                 </a>
               </li>
             </ul>
-            
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'settings' %}" class="nav-link">
@@ -56,20 +54,56 @@
                 </a>
               </li>
             </ul>
-
           </li>
   {% endif %}
 
+           <li class="nav-item">
+            <a href="{% url 'bookmark_list' %}" class="nav-link">
+              <i class="nav-icon fa fa-bookmark text-blue"></i>
+              <p>
+                {% translate "Bookmarks" %}
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" style="font-size:12px;">
+              <li class="nav-item">
+                <a href="{% url 'bookmark_list' %}" class="nav-link">
+                  <i class="nav-icon fas fa-bookmark"></i>
+                  <p>{% translate "My Bookmarks" %}</p>
+                </a>
+              </li>
+              {% for bookmark in bookmarks %}
+              <li class="nav-item">
+                <a href="{{ bookmark.2 }}" class="nav-link">
+                  &nbsp;&nbsp;
+                  {% if bookmark.0 == "customer" %}
+                    <i class="nav-icon fas fa-building"></i>
+                  {% elif bookmark.0 == "product" %}
+                    <i class="nav-icon fas fa-cube"></i>
+                  {% elif bookmark.0 == "report" %}
+                    <i class="nav-icon fas fa-file-invoice"></i>
+                  {% elif bookmark.0 == "cspn_evaluation" %}
+                    <i class="nav-icon fas fa-file-contract"></i>
+                  {% elif bookmark.0 == "finding" %}
+                    <i class="nav-icon fas fa-bug"></i>
+                  {% elif bookmark.0 == "finding_template" %}
+                    <i class="nav-icon fas fa-file-medical"></i>
+                  {% endif %}
+                  <p>{{ bookmark.1 }}</p>
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </li>
 
           <li class="nav-item">
             <a href="{% url 'customer_list' %}" class="nav-link">
-              <i class="nav-icon fas fa-building text-yellow"></i>
+              <i class="nav-icon fas fa-building text-purple"></i>
               <p>
                 {% translate "Customers" %}
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
-
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'customer_list' %}" class="nav-link">
@@ -89,10 +123,8 @@
               </li>
             </ul>
         {% endif %}
-
           </li>
 
-          
           <li class="nav-item">
             <a href="{% url 'product_list' %}" class="nav-link">
               <i class="nav-icon fa fa-cube text-primary"></i>
@@ -101,7 +133,6 @@
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
-
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'product_list' %}" class="nav-link">
@@ -121,19 +152,16 @@
               </li>
             </ul>
         {% endif %}
-
           </li>
-
 
           <li class="nav-item">
             <a href="{% url 'report_list' %}" class="nav-link">
-              <i class="nav-icon fas fa-copy text-success"></i>
+              <i class="nav-icon fa fa-file-invoice text-success"></i>
               <p>
                 {% translate "Reports" %}
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
-
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'report_list' %}" class="nav-link">
@@ -153,7 +181,6 @@
               </li>
             </ul>
         {% endif %}
-
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'deliverable_list' %}" class="nav-link">
@@ -164,12 +191,10 @@
                 </a>
               </li>
             </ul>
-
           </li>
 
-
           <li class="nav-item">
-            <a href="{% url 'openfindings' %}" class="nav-link">
+            <a href="{% url 'finding_list' %}" class="nav-link">
               <i class="nav-icon fas fa-bug text-danger"></i>
               <p>
                 {% translate "Findings" %}
@@ -178,34 +203,89 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{% url 'openfindings' %}" class="nav-link">
+                <a href="{% url 'finding_list' %}" class="nav-link">
+                  <i class="nav-icon fas fa-table"></i>
+                  <p>{% translate "All Findings" %}</p>
+                </a>
+              </li>
+            </ul>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'findings_opened' %}" class="nav-link">
                   <i class="nav-icon fas fa-exclamation-triangle"></i>
-                  <p>{% translate "Open Findings" %}</p>
+                  <p>{% translate "Opened Findings" %}</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="{% url 'closedfindings' %}" class="nav-link">
+                <a href="{% url 'findings_closed' %}" class="nav-link">
                   <i class="nav-icon fas fa-toolbox"></i>
                   <p>{% translate "Closed Findings" %}</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="{% url 'template_list' %}" class="nav-link">
-                  <i class="far fa-file-alt nav-icon"></i>
-                  <p>{% translate "Finding templates" %}</p>
+                  <i class="nav-icon fas fa-file-medical"></i>
+                  <p>{% translate "Finding Templates" %}</p>
                 </a>
               </li>
-
             {% if user.groups.all.0|stringformat:'s' == "administrator" %}
               <li class="nav-item">
                 <a href="{% url 'template_add' %}" class="nav-link">
-                  <i class="fas fa-file-code nav-icon"></i>
-                  <p>{% translate "Add Finding template" %}</p>
+                  <i class="nav-icon fas fa-file-medical"></i>
+                  <p>{% translate "Add Finding Template" %}</p>
                 </a>
               </li>
             {% endif %}
 
             </ul>
+          </li>
+
+          {% if enable_cspn %}
+          <li class="nav-item">
+            <a href="{% url 'cspn_list' %}" class="nav-link">
+              <i class="nav-icon fas fa-file-contract text-success"></i>
+              <p>
+                {% translate "CSPN Evaluations" %}
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'cspn_list' %}" class="nav-link">
+                  <i class="nav-icon fas fa-table"></i>
+                  <p>{% translate "All CSPN Evaluations" %}</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          {% endif %}
+
+          <li class="nav-item">
+            <a href="{% url 'share_list' %}" class="nav-link">
+              <i class="nav-icon fa fa-share text-light"></i>
+              <p>
+                {% translate "Shares" %}
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'share_list' %}" class="nav-link">
+                  <i class="nav-icon fas fa-table"></i>
+                  <p>{% translate "All Shares" %}</p>
+                </a>
+              </li>
+            </ul>
+            {% if user.groups.all.0|stringformat:'s' == "administrator" %}
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'share_add' %}" class="nav-link">
+                  <i class="nav-icon fas fa-edit"></i>
+                  <p>{% translate "Add Share" %}</p>
+                </a>
+              </li>
+            </ul>
+            {% endif %}
           </li>
 
           <li class="nav-item">
@@ -223,22 +303,20 @@
                   <p>{% translate "CWE List" %}</p>
                 </a>
               </li>
-
             {% if user.groups.all.0|stringformat:'s' == "administrator" %}
               <li class="nav-item">
                 <a href="{% url 'cwe_add' %}" class="nav-link">
-                  <i class="fas fa-edit nav-icon"></i>
+                  <i class="nav-icon fas fa-edit"></i>
                   <p>{% translate "Add CWE" %}</p>
                 </a>
               </li>
             {% endif %}
-
             </ul>
           </li>
 
           <li class="nav-item">
             <a href="{% url 'owasp_list' %}" class="nav-link">
-              <i class="nav-icon fas fa-fingerprint text-info"></i>
+              <i class="nav-icon fas fa-fingerprint text-warning"></i>
               <p>
                 {% translate "OWASP" %}
                 <i class="fas fa-angle-left right"></i>
@@ -251,7 +329,6 @@
                   <p>{% translate "OWASP List" %}</p>
                 </a>
               </li>
-
             {% if user.groups.all.0|stringformat:'s' == "administrator" %}
               <li class="nav-item">
                 <a href="{% url 'owasp_add' %}" class="nav-link">
@@ -260,11 +337,17 @@
                 </a>
               </li>
             {% endif %}
-
             </ul>
           </li>
 
-
+          <li class="nav-item">
+            <a href="{% url 'fts' %}" class="nav-link">
+              <i class="nav-icon fa fa-search text-light"></i>
+              <p>
+                {% translate "Search" %}
+              </p>
+            </a>
+          </li>
         </ul>
       </nav>
     </div>
